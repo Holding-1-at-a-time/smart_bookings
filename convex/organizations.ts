@@ -207,16 +207,13 @@ const addData = mutation({
         dataValue: v.string(),
         createdAt: v.string(),
     },
-    handler: async (ctx, args) => {        // Check if the organization exists
-        const organization = await ctx.db.get<{ _id: string }>(organizationId)
-        if (!organization) {
-            throw new ConvexError("Organization not found", { organizationId })
+    handler: async (ctx, args) => {
+        if (await ctx.db
+            .query("organizationData")
+            .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+            .filter((q) => q.eq(q.field("data"), args.dataValue))
+            .first()) {
+            await ctx.db.delete(args.organizationId);
         }
-        // Create the new data entry
-        const data = { organizationId, data: { key: "", value: dataValue }, createdAt }
-        // Insert the new data
-        const dataId = await ctx.db.insert("organizationData", data)
-        return { _id: dataId }
-    },
-})
-
+    }
+});
