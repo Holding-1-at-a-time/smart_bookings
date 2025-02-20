@@ -47,6 +47,9 @@ importers:
       npm-run-all:
         specifier: ^4.1.5
         version: 4.1.5
+      path-to-regexp:
+        specifier: 6.3.0
+        version: 6.3.0
       react:
         specifier: ^19.0.0
         version: 19.0.0
