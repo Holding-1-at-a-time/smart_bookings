@@ -35,12 +35,21 @@ import { JSX, useState, ChangeEvent } from "react";
 const GET_ORGANIZATION_DATA = api.organizations.getOrganizationDataByKey;
 const ADD_ORGANIZATION_DATA = api.organizations.upsertOrganizationData;
 
-const DataComponent = ({ Id }): JSX.Element => {
-    const { data, loading, error } = useQuery(GET_ORGANIZATION_DATA, { organizationId });
+const DataComponent = ({ organizationId }: { organizationId: Id }): JSX.Element => {
     const addData = useMutation(ADD_ORGANIZATION_DATA);
     const [newDataKey, setNewDataKey] = useState<string>("");
     const [newDataValue, setNewDataValue] = useState<string>("");
+    const { data, loading, error } = useQuery(GET_ORGANIZATION_DATA, { organizationId });
 
+    /**
+     * handleAddData
+     * 
+     * Adds a new data entry for the organization. If the key already exists, it will be updated.
+     * If the input is invalid (e.g. empty key or value), displays an error message.
+     * If the data is successfully added, displays a success message with the added key and value.
+     * If an error occurs during the mutation, displays an error message with the error details.
+     * @returns {Promise<void>}
+     */
     const handleAddData = async (): Promise<void> => {
         if (!newDataKey.trim() || !newDataValue.trim()) {
             toast({
@@ -54,28 +63,49 @@ const DataComponent = ({ Id }): JSX.Element => {
             const addedKey = newDataKey;
             const addedValue = newDataValue;
 
-            await addData({
+            const result = await addData({
                 _id: organizationId,
                 dataKey: newDataKey,
                 dataValue: newDataValue,
             });
+
             setNewDataKey("");
             setNewDataValue("");
+
             toast({
                 title: "Data added",
                 description: `Data added: ${addedKey} = ${addedValue}`,
                 variant: "default",
             });
+
+            return result; // Return the result of addData if needed.
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            console.error('Error adding data:', error);
+            let errorMessage = "An unexpected error occurred.";
+
+            if (error instanceof Error) {
+                errorMessage = error.message;
+
+                // Check for specific error types or messages
+                if (error.message.includes("duplicate key")) {
+                    errorMessage = "A data entry with this key already exists.";
+                } else if (error.message.includes("validation failed")) {
+                    errorMessage = "Invalid data format. Please check your input.";
+                } // Add more specific error checks as needed.
+            } else if (typeof error === "string") {
+                errorMessage = error;
+            }
+
             toast({
-                title: "Error adding data", 
+                title: "Error adding data",
                 description: errorMessage,
                 variant: "destructive",
             });
-        if (error) {
-    }
+
+            // Consider re-throwing the error or logging it for debugging
+            console.error("Error adding data:", error);
+            throw error; // Uncomment if you want to re-throw the error.
+        }
+    };
 
     if (LoadingSpinner) {
         return <LoadingSpinner />;

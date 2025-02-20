@@ -20,11 +20,9 @@ export default function WaitListPage() {
                 socialButtonsVariant: 'iconButton',
                 shimmer: true,
                 animations: true,
-                signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "",
-                afterJoinWaitlistUrl: "./",
-            }
-        }
-
-
-            />
+                afterJoinWaitlistUrl: "auth/app/page",
+            },
+        }}
+        signInUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL}
+    />
 }

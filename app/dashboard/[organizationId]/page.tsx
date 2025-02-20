@@ -12,18 +12,25 @@
 **/
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
 
-export default async function DashboardPage() {
-    const { userId, orgId } = await auth()
+
+export default async function DashboardPage({ params }: { params: { organizationId: string } }) {
+    const { userId, orgId } = await auth();
 
     if (!userId || !orgId) {
         return <div>Access denied! Sign-In to view this page</div>;
     }
-    const user = await currentUser()
+
+    if (orgId !== params.organizationId) {
+        notFound();
+    }
+
+    const user = await currentUser();
 
     return (
         <div>
-            <h1>Welcome, {user.firstName} to your Dashboard!</h1>
+            <h1>Welcome, {user?.firstName} to your Dashboard!</h1>
             <p>Organization ID: {orgId}</p>
         </div>
     );

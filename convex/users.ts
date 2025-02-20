@@ -44,18 +44,23 @@ export const internalDeleteUser = internalMutation({
 export const createOrUpdateUser = mutation({
     args: {
         clerkId: v.string(),
-        name: v.string(),
-        email: v.string(),
-        role: v.string(),
-        organizationId: v.optional(v.id("organizations")),
         metadata: v.optional(v.any()),
     },
     handler: async (ctx, args) => {
         console.log("createOrUpdateUser", args)
+        const existingUser = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .unique()
+
+        if (existingUser) {
+            // Update the existing user
+            await ctx.db.patch(existingUser._id, {
+                metadata: args.metadata || existingUser.metadata,
+                })
         return await ctx.db.insert("users", args)
     },
 })
-
 /**
  * Public mutation to delete a user.
  */
@@ -203,26 +208,32 @@ export const searchUsers = query({
     },
     returns: v.array(v.type(User)),
     handler: async (ctx, args) => {
-        const { searchTerm, organizationId, limit } = args;
+        try {
+            const { searchTerm, organizationId, limit } = args;
+
+            if (!searchTerm) {
+              throw new Error("Search term is required");
+            }
 
         const userQuery = ctx.db
-            .query("users")
-            .withIndex("by_name_email", (q) => 
-                q.eq("name", searchTerm).or(q.eq("email", searchTerm))
-            );
+            .query<users>("user")
+            .withIndex("search_name_email", (q) => q.eq(searchTerm, {}));
 
-        if (organizationId) {
-            userQuery.filter((q) => q.field("organizationId").eq(organizationId));
+            if (organizationId) {
+                userQuery.filter((q) => q.field("organizationId").eq(organizationId));
+            }
+
+            if (limit) {
+                userQuery.take(limit);
+            }
+
+            return await userQuery.collect();
+        } catch (error) {
+            console.error("Error searching users:", error);
+            throw new Error("Failed to search users");
         }
-
-        if (limit) {
-            userQuery.take(limit);
-        }
-
-        return await userQuery.collect();
     },
-},
-);
+});
 
 export interface SearchUsersArgs {
     searchTerm: string;

@@ -21,13 +21,9 @@
 import React from 'react';
 import { SignUp } from "@clerk/nextjs"
 
-export function SignUpPage({
-    onSignUpSuccess,
-}: {
-    onSignUpSuccess?: () => void;
-}): JSX.Element {
+export function SignUpPage() {
     return (
-        <div className="flex flex-col items-center justify-center h-screen">
+        <div className="flex flex-col items-center justify-center h-screen" >
             <div className="bg-white rounded-lg shadow-md p-8 w-96">
                 <h2 className="text-lg font-bold mb-4">Sign Up</h2>
                 <SignUp
@@ -35,9 +31,9 @@ export function SignUpPage({
                     appearance={{
                         elements: {
                             // Customize the primary button style
-                            formButtonPrimary: "bg-green-500 hover:bg-green-600 text-white",
+                            formButtonPrimary: "color: #00ae98",
                             // Customize the footer link style
-                            footerActionLink: "text-green-500 hover:text-green-600",
+                            footerActionLink: "text-emerald-500 hover:text-emerald-600",
                         },
                     }}
                     // Set the routing mode to "path"
@@ -49,7 +45,7 @@ export function SignUpPage({
                     // Set the URL to redirect to when the user is already signed in
                     signInFallbackRedirectUrl="/dashboard"
                     // Set the callback function to be executed after a successful sign-up
-                    afterSignUpUrl={onSignUpSuccess ? onSignUpSuccess.toString() : undefined}
+                    onSignUpSuccess="/auth/app/page"
                 />
             </div>
         </div>
