@@ -206,8 +206,10 @@ export const searchUsers = query({
         const { searchTerm, organizationId, limit } = args;
 
         const userQuery = ctx.db
-            .query<users>("user")
-            .withIndex("search_name_email", (q) => q.eq(searchTerm, {}));
+            .query("users")
+            .withIndex("by_name_email", (q) => 
+                q.eq("name", searchTerm).or(q.eq("email", searchTerm))
+            );
 
         if (organizationId) {
             userQuery.filter((q) => q.field("organizationId").eq(organizationId));
