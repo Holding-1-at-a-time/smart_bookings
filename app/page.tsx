@@ -20,15 +20,16 @@ import {
 } from "convex/react";
 import { api } from "../convex/_generated/api";
 import Link from "next/link";
-import { SignUpButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignUpButton } from "@clerk/nextjs";
 import { SignInButton } from "@clerk/nextjs";
 import { UserButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
     <>
       <header className="sticky top-0 z-10 bg-background p-4 border-b-2 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
-        Convex + Next.js + Clerk
+        <h1 className="text-4xl font-bold mb-8">Welcome to Smart Booking&apos;s</h1>
         <UserButton
           appearance={{
             layout: {
@@ -41,6 +42,21 @@ export default function Home() {
             },
           }}
         />
+        <SignedIn>
+          <Link href="/dashboard">
+            <Button>Go to Dashboard</Button>
+          </Link>
+        </SignedIn>
+        <SignedOut>
+          <div className="space-x-4">
+            <Link href="/sign-in">
+              <Button>Sign In</Button>
+            </Link>
+            <Link href="/sign-up">
+              <Button variant="outline">Sign Up</Button>
+            </Link>
+          </div>
+        </SignedOut>
       </header>
       <main className="p-8 flex flex-col gap-8">
         <h1 className="text-4xl font-bold text-center">

@@ -1,21 +1,61 @@
-/**
-    * @description      : 
-    * @author           : rrome
-    * @group            : 
-    * @created          : 19/02/2025 - 10:22:13
-    * 
-    * MODIFICATION LOG
-    * - Version         : 1.0.0
-    * - Date            : 19/02/2025
-    * - Author          : rrome
-    * - Modification    : 
-**/
-import { CreateOrganization } from "@clerk/nextjs";
+import { CreateOrganization } from "@clerk/clerk-react";
+import { JSX } from "react";
 
-export default function CreateOrganizationPage() {
+/**
+ * CreateOrganizationPage
+ *
+ * This component renders the CreateOrganization component.
+ *
+ * @returns {JSX.Element} A JSX element representing the CreateOrganization component.
+ */
+export default function CreateOrganizationPage(): JSX.Element {
     return (
-        <div className="flex justify-center items-center min-h-screen">
-            <CreateOrganization />
+        <div className="flex min-h-screen items-center justify-center">
+            {/* The CreateOrganization component is rendered with custom styles for the form, card, and buttons. */}
+            <CreateOrganization
+                appearance={{
+                    elements: {
+                        /**
+                         * Style for the primary form button.
+                         */
+                        formButtonPrimary: "bg-primary hover:bg-primary/90 text-white",
+                        /**
+                         * Style for the card element.
+                         */
+                        card: "bg-gray-800 border-gray-700",
+                        /**
+                         * Style for the header title.
+                         */
+                        headerTitle: "text-white",
+                        /**
+                         * Style for the header subtitle.
+                         */
+                        headerSubtitle: "text-gray-300",
+                        /**
+                         * Style for the form field labels.
+                         */
+                        formFieldLabel: "text-gray-300",
+                        /**
+                         * Style for the form field inputs.
+                         */
+                        formFieldInput: "bg-gray-700 border-gray-600 text-white",
+                    },
+                }}
+            />
         </div>
     );
 }
+
+/**
+ * @description      : 
+ * @author           : rrome
+ * @group            : 
+ * @created          : 20/02/2025 - 15:40:21
+ * 
+ * MODIFICATION LOG
+ * - Version         : 1.0.0
+ * - Date            : 20/02/2025
+ * - Author          : rrome
+ * - Modification    : 
+ */
+
