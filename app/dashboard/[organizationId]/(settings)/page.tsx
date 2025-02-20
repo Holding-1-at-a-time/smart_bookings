@@ -11,8 +11,9 @@
     * - Modification    : 
 **/
 
-import { OrganizationProfile } from "@clerk/nextjs";
+import { OrganizationProfile } from "@clerk/clerk-react";
 import { JSX } from "react";
+
 
 /**
  * OrganizationSettingsPage component.

@@ -1,3 +1,15 @@
+/**
+    * @description      : 
+    * @author           : rrome
+    * @group            : 
+    * @created          : 20/02/2025 - 07:34:14
+    * 
+    * MODIFICATION LOG
+    * - Version         : 1.0.0
+    * - Date            : 20/02/2025
+    * - Author          : rrome
+    * - Modification    : 
+**/
 "use client";
 
 import {
@@ -17,7 +29,18 @@ export default function Home() {
     <>
       <header className="sticky top-0 z-10 bg-background p-4 border-b-2 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
         Convex + Next.js + Clerk
-        <UserButton />
+        <UserButton
+          appearance={{
+            layout: {
+              shimmer: true,
+              animations: true,
+            },
+            variables: {
+              colorPrimary: "#00AE98",
+              colorTextSecondary: "#707070",
+            },
+          }}
+        />
       </header>
       <main className="p-8 flex flex-col gap-8">
         <h1 className="text-4xl font-bold text-center">

@@ -15,6 +15,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from '@clerk/themes'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +41,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider dynamic>
+    <ClerkProvider dynamic
+      appearance={{
+        baseTheme: [dark],
+        variables: {
+          colorPrimary: "#00AE98",
+          colorTextSecondary: "#707070",
+          colorShimmer: "#00AE98",
+        },
+        layout: {
+          animations: true,
+          shimmer: true,
+        },
+      }}
+    >
       <html lang="en">
         <header />
         <title>Auto Detailing Scheduling System</title>
