@@ -74,7 +74,7 @@ const DataComponent = ({ Id }): JSX.Element => {
             });
         }
     };
-    if (Error) {
+    if (error) {
         return <div>Error: {error.message}</div>;
     }
 
