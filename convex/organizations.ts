@@ -61,6 +61,7 @@ export const listOrganizationData = query({
         }
 
         const data = await query.take(count);
+        const cursor = data.length === count ? data[data.length - 1]._id : null;
 
         return {
             data: data.map((item) => ({
@@ -69,7 +70,7 @@ export const listOrganizationData = query({
                 value: item.value,
                 createdAt: item.createdAt,
             })),
-            cursor: newCursor,
+            cursor: cursor,
         }
     },
 })
