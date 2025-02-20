@@ -64,7 +64,7 @@ export const listServiceCategories = query({
         return await ctx.db
             .query("serviceCategories")
             .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-            .order("asc", (q) => q.field("order"))
+            .order("asc")
             .collect()
     },
 })
