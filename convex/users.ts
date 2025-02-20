@@ -2,7 +2,7 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 19/02/2025 - 16:24:11
+    * @created          : 19/02/2025 - 22:40:56
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
@@ -26,32 +26,32 @@ const internalCreateOrUpdateUser = internalMutation({
         metadata: v.optional(v.any()),
     },
     handler: async (ctx, args) => {
+        const { clerkId, name, email, role, organizationId, metadata } = args
+        const now = new Date().toISOString()
+
         const existingUser = await ctx.db
             .query("users")
-            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
             .unique()
-
-        const now = new Date().toISOString()
 
         if (existingUser) {
             return await ctx.db.patch(existingUser._id, {
-                name: args.name,
-                email: args.email,
-                role: args.role,
-                organizationId: args.organizationId,
-                metaData: args.metadata,
-                upDatedAt: now,
+                name,
+                email,
+                role,
+                organizationId,
+                metadata,
+                updatedAt: now,
             })
         } else {
             return await ctx.db.insert("users", {
-                clerkId: args.clerkId,
-                name: args.name,
-                email: args.email,
-                role: args.role,
-                organizationId: args.organizationId,
-                metadata: args.metadata,
-                createdAt: now,
-                updatedAt: now,
+                organizationId: v.id("organizations"),
+                clerkId: v.string(),
+                name: v.string(),
+                email: v.string(),
+                role: v.string(),
+                metadata: v.optional(v.any()),
+                updatedAt: v.string(),
             })
         }
     },
@@ -60,19 +60,20 @@ const internalCreateOrUpdateUser = internalMutation({
 const internalDeleteUser = internalMutation({
     args: { userId: v.id("users") },
     handler: async (ctx, args) => {
+        const { userId } = args
+
         // Delete user's sessions
-        await ctx.db
-            .query("userSessions")
-            .withIndex("by_user_id", (q) => q.eq("clerkId", args.userId))
+        const sessions = await ctx.db
+            .query("users")
+            .withIndex("by_user_id", (q) => q.eq("userId", userId))
             .collect()
-            .then((sessions) => {
-                sessions.forEach((session) => {
-                    ctx.db.delete(session._id)
-                })
-            })
+
+        for (const session of sessions) {
+            await ctx.db.delete(session._id)
+        }
 
         // Delete the user
-        await ctx.db.delete(args.userId)
+        await ctx.db.delete(userId)
     },
 })
 
@@ -106,12 +107,13 @@ export const deleteUser = mutation({
 export const updateUserRole = mutation({
     args: { userId: v.id("users"), newRole: v.string() },
     handler: async (ctx, args) => {
-        const user = await ctx.db.get(args.userId)
+        const { userId, newRole } = args
+        const user = await ctx.db.get(userId)
         if (!user) {
             throw new Error("User not found")
         }
-        return await ctx.db.patch(args.userId, {
-            role: args.newRole,
+        return await ctx.db.patch(userId, {
+            role: newRole,
             updatedAt: new Date().toISOString(),
         })
     },
@@ -120,12 +122,13 @@ export const updateUserRole = mutation({
 export const updateUserOrganization = mutation({
     args: { userId: v.id("users"), organizationId: v.optional(v.id("organizations")) },
     handler: async (ctx, args) => {
-        const user = await ctx.db.get(args.userId)
+        const { userId, organizationId } = args
+        const user = await ctx.db.get(userId)
         if (!user) {
             throw new Error("User not found")
         }
-        return await ctx.db.patch(args.userId, {
-            organizationId: args.organizationId,
+        return await ctx.db.patch(userId, {
+            organizationId,
             updatedAt: new Date().toISOString(),
         })
     },
@@ -156,20 +159,21 @@ export const listUsers = query({
         cursor: v.optional(v.id("users")),
     },
     handler: async (ctx, args) => {
+        const { organizationId, limit, cursor } = args
         let userQuery = ctx.db.query("users")
 
-        if (args.organizationId) {
-            userQuery = userQuery.withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+        if (organizationId) {
+        userQuery.withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
         }
 
-        if (args.cursor) {
-            userQuery = userQuery.order("desc").startAfter(args.cursor)
-        } else {
-            userQuery = userQuery.order("desc")
+        userQuery.order("desc")
+
+        if (cursor) {
+            userQuery = userQuery.startAfter(cursor)
         }
 
-        if (args.limit) {
-            userQuery = userQuery.take(args.limit)
+        if (limit) {
+        userQuery.take(limit)
         }
 
         const users = await userQuery.collect()
@@ -189,18 +193,17 @@ export const searchUsers = query({
         limit: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
+        const { searchTerm, organizationId, limit } = args
         let userQuery = ctx.db
             .query("users")
-            .withSearchIndex("search_name_email", (q) =>
-                q.search("name", args.searchTerm).or(q.search("email", args.searchTerm)),
-            )
+            .withIndex("search_name_email", (q) => q.search("name", searchTerm).or(q.search("email", searchTerm)))
 
-        if (args.organizationId) {
-            userQuery = userQuery.filter((q) => q.eq(q.field("organizationId"), args.organizationId))
+        if (organizationId) {
+            userQuery = userQuery.filter((q) => q.eq(q.field("organizationId"), organizationId))
         }
 
-        if (args.limit) {
-            userQuery = userQuery.take(args.limit)
+        if (limit) {
+        userQuery.take(limit)
         }
 
         return await userQuery.collect()
@@ -232,30 +235,15 @@ export const storeUserSession = mutation({
         organizationPermissions: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
+        const { clerkId, name, email, organizationRole, organizationId, ...metadataFields } = args
+
         return await ctx.runMutation(internalCreateOrUpdateUser, {
-            clerkId: args.clerkId,
-            name: args.name,
-            email: args.email,
-            role: args.organizationRole || "member",
-            organizationId: args.organizationId,
-            metadata: {
-                userName: args.userName,
-                firstName: args.firstName,
-                familyName: args.familyName,
-                phoneNumber: args.phoneNumber,
-                emailVerified: args.emailVerified,
-                hasVerifiedContactInfo: args.hasVerifiedContactInfo,
-                createdAt: args.createdAt,
-                updatedAt: args.updatedAt,
-                metadata: args.metadata,
-                unsafeMetadata: args.unsafeMetadata,
-                privateMetadata: args.privateMetadata,
-                organizationName: args.organizationName,
-                organizationSlug: args.organizationSlug,
-                organizationLogo: args.organizationLogo,
-                hasOrgLogo: args.hasOrgLogo,
-                organizationPermissions: args.organizationPermissions,
-            },
+            clerkId,
+            name,
+            email,
+            role: organizationRole || "member",
+            organizationId,
+            metadata: metadataFields,
         })
     },
 })
