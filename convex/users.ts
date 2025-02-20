@@ -1,82 +1,46 @@
 /**
-    * @description      : 
-    * @author           : rrome
-    * @group            : 
-    * @created          : 19/02/2025 - 16:24:11
-    * 
-    * MODIFICATION LOG
-    * - Version         : 1.0.0
-    * - Date            : 19/02/2025
-    * - Author          : rrome
-    * - Modification    : 
-**/
-
+ * @description      : This module handles user operations including creating, updating, and querying users.
+ * @author           : rrome
+ * @group            : 
+ * @created          : 20/02/2025 - 00:32:02
+ * 
+ * MODIFICATION LOG
+ * - Version         : 1.0.0
+ * - Date            : 20/02/2025
+ * - Author          : rrome
+ * - Modification    : 
+ **/
 import { v } from "convex/values"
 import { internalMutation, mutation, query } from "./_generated/server"
 
 
-// Internal mutations for ACID operations
-const internalCreateOrUpdateUser = internalMutation({
-    args: {
-        clerkId: v.string(),
-        name: v.string(),
-        email: v.string(),
-        role: v.string(),
-        organizationId: v.optional(v.id("organizations")),
-        metadata: v.optional(v.any()),
-    },
-    handler: async (ctx, args) => {
-        const existingUser = await ctx.db
-            .query("users")
-            .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-            .unique()
-
-        const now = new Date().toISOString()
-
-        if (existingUser) {
-            return await ctx.db.patch(existingUser._id, {
-                name: args.name,
-                email: args.email,
-                role: args.role,
-                organizationId: args.organizationId,
-                metaData: args.metadata,
-                upDatedAt: now,
-            })
-        } else {
-            return await ctx.db.insert("users", {
-                clerkId: args.clerkId,
-                name: args.name,
-                email: args.email,
-                role: args.role,
-                organizationId: args.organizationId,
-                metadata: args.metadata,
-                createdAt: now,
-                updatedAt: now,
-            })
-        }
-    },
-})
-
-const internalDeleteUser = internalMutation({
+/**
+ * Internal mutation to delete a user and their sessions.
+ */
+export const internalDeleteUser = internalMutation({
     args: { userId: v.id("users") },
     handler: async (ctx, args) => {
+        console.log("internalDeleteUser", args)
+        const { userId } = args
+
         // Delete user's sessions
-        await ctx.db
+        const sessions = await ctx.db
             .query("userSessions")
-            .withIndex("by_user_id", (q) => q.eq("clerkId", args.userId))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId))
             .collect()
-            .then((sessions) => {
-                sessions.forEach((session) => {
-                    ctx.db.delete(session._id)
-                })
-            })
+
+        for (const session of sessions) {
+            await ctx.db.delete(session._id)
+        }
 
         // Delete the user
-        await ctx.db.delete(args.userId)
+        await ctx.db.delete(userId)
     },
 })
 
-// Public mutations
+/**
+ * Public mutation to create or update a user.
+ */
 export const createOrUpdateUser = mutation({
     args: {
         clerkId: v.string(),
@@ -87,61 +51,83 @@ export const createOrUpdateUser = mutation({
         metadata: v.optional(v.any()),
     },
     handler: async (ctx, args) => {
-        return await ctx.runMutation(internalCreateOrUpdateUser, args)
+        console.log("createOrUpdateUser", args)
+        return await ctx.db.insert("users", args)
     },
 })
 
+/**
+ * Public mutation to delete a user.
+ */
 export const deleteUser = mutation({
     args: { userId: v.id("users") },
     handler: async (ctx, args) => {
+        console.log("deleteUser", args)
         const user = await ctx.db.get(args.userId)
         if (!user) {
             throw new Error("User not found")
         }
-        await ctx.runMutation(internalDeleteUser, args)
+        await ctx.db.delete(args.userId)
         return true
     },
 })
 
+/**
+ * Public mutation to update a user's role.
+ */
 export const updateUserRole = mutation({
     args: { userId: v.id("users"), newRole: v.string() },
     handler: async (ctx, args) => {
-        const user = await ctx.db.get(args.userId)
+        console.log("updateUserRole", args)
+        const { userId, newRole } = args
+        const user = await ctx.db.get(userId)
         if (!user) {
             throw new Error("User not found")
         }
-        return await ctx.db.patch(args.userId, {
-            role: args.newRole,
+        return await ctx.db.patch(userId, {
+            role: newRole,
             updatedAt: new Date().toISOString(),
         })
     },
 })
 
+/**
+ * Public mutation to update a user's organization.
+ */
 export const updateUserOrganization = mutation({
     args: { userId: v.id("users"), organizationId: v.optional(v.id("organizations")) },
     handler: async (ctx, args) => {
-        const user = await ctx.db.get(args.userId)
+        console.log("updateUserOrganization", args)
+        const { userId, organizationId } = args
+        const user = await ctx.db.get(userId)
         if (!user) {
             throw new Error("User not found")
         }
-        return await ctx.db.patch(args.userId, {
-            organizationId: args.organizationId,
+        return await ctx.db.patch(userId, {
+            organizationId,
             updatedAt: new Date().toISOString(),
         })
     },
 })
 
-// Queries
+/**
+ * Query to get a user by their ID.
+ */
 export const getUser = query({
     args: { userId: v.id("users") },
     handler: async (ctx, args) => {
+        console.log("getUser", args)
         return await ctx.db.get(args.userId)
     },
 })
 
+/**
+ * Query to get a user by their Clerk ID.
+ */
 export const getUserByClerkId = query({
     args: { clerkId: v.string() },
     handler: async (ctx, args) => {
+        console.log("getUserByClerkId", args)
         return await ctx.db
             .query("users")
             .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
@@ -149,6 +135,9 @@ export const getUserByClerkId = query({
     },
 })
 
+/**
+ * Query to list users, optionally filtered by organization.
+ */
 export const listUsers = query({
     args: {
         organizationId: v.optional(v.id("organizations")),
@@ -156,20 +145,17 @@ export const listUsers = query({
         cursor: v.optional(v.id("users")),
     },
     handler: async (ctx, args) => {
-        let userQuery = ctx.db.query("users")
+        const { organizationId, limit } = args
+        const userQuery = ctx.db.query("users")
 
-        if (args.organizationId) {
-            userQuery = userQuery.withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+        if (organizationId) {
+            userQuery.withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
         }
 
-        if (args.cursor) {
-            userQuery = userQuery.order("desc").startAfter(args.cursor)
-        } else {
-            userQuery = userQuery.order("desc")
-        }
+        userQuery.order("desc")
 
-        if (args.limit) {
-            userQuery = userQuery.take(args.limit)
+        if (limit) {
+            userQuery.take(limit)
         }
 
         const users = await userQuery.collect()
@@ -182,31 +168,71 @@ export const listUsers = query({
     },
 })
 
+/**
+ * Query to search users by name or email, optionally filtered by organization.
+ */
+/**
+ * Query to search users by name or email, optionally filtered by organization.
+ *
+ * @param ctx The Convex context
+ * @param args The query arguments
+ * @param args.searchTerm The search term to query
+ * @param args.organizationId The ID of the organization to filter by, if any
+ * @param args.limit The maximum number of results to return, if any
+ * @returns An array of users matching the query
+ */
+/**
+ * Searches for users based on the provided search term, organization ID, and limit.
+ *
+ * @param {string} searchTerm - The term to search for in the users' names and emails.
+ * @param {string} [organizationId] - The ID of the organization to filter by.
+ * @param {number} [limit] - The maximum number of results to return.
+ * @returns {Promise<User[]>} A promise that resolves to an array of users that match the search criteria.
+ */
+/**
+ * Searches for users based on the provided search term, organization ID, and limit.
+ *
+ * @param {SearchUsersArgs} args - The search arguments.
+ * @returns {Promise<User[]>} A promise that resolves to an array of users that match the search criteria.
+ */
 export const searchUsers = query({
     args: {
         searchTerm: v.string(),
-        organizationId: v.optional(v.id("organizations")),
+        organizationId: v.optional(v.string()),
         limit: v.optional(v.number()),
     },
+    returns: v.array(v.type(User)),
     handler: async (ctx, args) => {
-        let userQuery = ctx.db
+        const { searchTerm, organizationId, limit } = args;
+
+        const userQuery = ctx.db
             .query("users")
-            .withSearchIndex("search_name_email", (q) =>
-                q.search("name", args.searchTerm).or(q.search("email", args.searchTerm)),
-            )
+            .withIndex("by_name_email", (q) => 
+                q.eq("name", searchTerm).or(q.eq("email", searchTerm))
+            );
 
-        if (args.organizationId) {
-            userQuery = userQuery.filter((q) => q.eq(q.field("organizationId"), args.organizationId))
+        if (organizationId) {
+            userQuery.filter((q) => q.field("organizationId").eq(organizationId));
         }
 
-        if (args.limit) {
-            userQuery = userQuery.take(args.limit)
+        if (limit) {
+            userQuery.take(limit);
         }
 
-        return await userQuery.collect()
+        return await userQuery.collect();
     },
-})
+},
+);
 
+export interface SearchUsersArgs {
+    searchTerm: string;
+    organizationId?: string;
+    limit?: number;
+}
+
+/**
+ * Mutation to store a user's session information.
+ */
 export const storeUserSession = mutation({
     args: {
         clerkId: v.string(),
@@ -232,30 +258,17 @@ export const storeUserSession = mutation({
         organizationPermissions: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
-        return await ctx.runMutation(internalCreateOrUpdateUser, {
-            clerkId: args.clerkId,
-            name: args.name,
-            email: args.email,
-            role: args.organizationRole || "member",
-            organizationId: args.organizationId,
-            metadata: {
-                userName: args.userName,
-                firstName: args.firstName,
-                familyName: args.familyName,
-                phoneNumber: args.phoneNumber,
-                emailVerified: args.emailVerified,
-                hasVerifiedContactInfo: args.hasVerifiedContactInfo,
-                createdAt: args.createdAt,
-                updatedAt: args.updatedAt,
-                metadata: args.metadata,
-                unsafeMetadata: args.unsafeMetadata,
-                privateMetadata: args.privateMetadata,
-                organizationName: args.organizationName,
-                organizationSlug: args.organizationSlug,
-                organizationLogo: args.organizationLogo,
-                hasOrgLogo: args.hasOrgLogo,
-                organizationPermissions: args.organizationPermissions,
-            },
+        const { clerkId, name, email, organizationRole, organizationId, ...metadataFields } = args
+
+        return await ctx.db.insert("users", {
+            clerkId,
+            name,
+            email,
+            role: organizationRole || "member",
+            organizationId,
+            metadata: metadataFields,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         })
     },
 })

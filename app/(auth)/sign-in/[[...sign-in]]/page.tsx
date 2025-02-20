@@ -10,8 +10,16 @@
     * - Author          : rrome
     * - Modification    : 
 **/
+
+
 import { SignIn } from "@clerk/nextjs";
 
+/**
+ * Renders the SignIn page with customized appearance settings for buttons and links.
+ * 
+ * @returns JSX.Element - The rendered SignIn component.
+ * @throws Will not throw any exceptions.
+ */
 export default function SignInPage() {
     return (
         <SignIn

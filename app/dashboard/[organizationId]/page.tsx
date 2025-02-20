@@ -10,19 +10,20 @@
     * - Author          : rrome
     * - Modification    : 
 **/
-import { auth, currentUser } from "@clerk/nextjs";
+
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 export default async function DashboardPage() {
-    const { userId, orgId } = auth();
-    const user = await currentUser();
+    const { userId, orgId } = await auth()
 
     if (!userId || !orgId) {
-        return <div>Access denied</div>;
+        return <div>Access denied! Sign-In to view this page</div>;
     }
+    const user = await currentUser()
 
     return (
         <div>
-            <h1>Welcome to the Dashboard, {user?.firstName}!</h1>
+            <h1>Welcome, {user.firstName} to your Dashboard!</h1>
             <p>Organization ID: {orgId}</p>
         </div>
     );
