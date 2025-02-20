@@ -2,21 +2,19 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 19/02/2025 - 22:37:40
+    * @created          : 20/02/2025 - 00:23:33
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 19/02/2025
+    * - Date            : 20/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
 
 import { v } from "convex/values"
-import { internalMutation, mutation, query } from "./_generated/server"
+import { mutation, query } from "./_generated/server"
 
-
-// Internal mutation for ACID-compliant data operations
-const internalUpsertOrganizationData = internalMutation({
+export const upsertOrganizationData = mutation({
     args: {
         organizationId: v.id("organizations"),
         key: v.string(),
@@ -27,8 +25,7 @@ const internalUpsertOrganizationData = internalMutation({
 
         const existingData = await ctx.db
             .query("organizationData")
-            .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
-            .filter((q) => q.eq(q.field("key"), key))
+            .withIndex("by_organization_and_key", (q) => q.eq("organizationId", organizationId).eq("key", key))
             .first()
 
         if (existingData) {
@@ -44,18 +41,6 @@ const internalUpsertOrganizationData = internalMutation({
     },
 })
 
-// Public mutation for adding or updating organization data
-export const upsertOrganizationData = mutation({
-    args: {
-        organizationId: v.id("organizations"),
-        key: v.string(),
-        value: v.string(),
-    },
-    handler: async (ctx, args) => {
-        await ctx.runMutation(internalUpsertOrganizationData, args)
-    },
-})
-
 // Query to list organization data
 export const listOrganizationData = query({
     args: {
@@ -64,20 +49,18 @@ export const listOrganizationData = query({
         cursor: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const { organizationId, count, cursor } = args
+        const { organizationId, count } = args
 
-        let query = ctx.db
+        const query = ctx.db
             .query("organizationData")
-            .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
-            .order("desc")
+            .withIndex("by_organization", q => q.eq("organizationId", organizationId))
+            .order("desc");
 
-        if (cursor) {
-            query = query.startAfter(cursor)
+        if (args.cursor) {
+            query.filter(q => q.gt(q.field("_id"), args.cursor));
         }
 
-        const data = await query.take(count)
-
-        const newCursor = data.length > 0 ? data[data.length - 1]._id : null
+        const data = await query.take(count);
 
         return {
             data: data.map((item) => ({

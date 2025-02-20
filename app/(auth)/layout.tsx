@@ -10,8 +10,20 @@
     * - Author          : rrome
     * - Modification    : 
 **/
+
+
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
+
+
+/**
+  * Provides a layout for authentication pages.
+  * This layout handles the loading state and renders the provided children when Clerk is loaded.
+  * @param {{ children: React.ReactNode }} props - The component props.
+  * @param {React.ReactNode} props.children - The content to be rendered within the layout.
+  * @returns {JSX.Element} The rendered layout.
+  */
+
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
     return (
