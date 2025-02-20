@@ -36,11 +36,10 @@ const GET_ORGANIZATION_DATA = api.organizations.getOrganizationDataByKey;
 const ADD_ORGANIZATION_DATA = api.organizations.upsertOrganizationData;
 
 const DataComponent = ({ Id }): JSX.Element => {
-    const data = useQuery(GET_ORGANIZATION_DATA, { organizationId });
+    const { data, loading, error } = useQuery(GET_ORGANIZATION_DATA, { organizationId });
     const addData = useMutation(ADD_ORGANIZATION_DATA);
     const [newDataKey, setNewDataKey] = useState<string>("");
     const [newDataValue, setNewDataValue] = useState<string>("");
-    const { data, loading, error } = useQuery(GET_ORGANIZATION_DATA, { organizationId });
 
     const handleAddData = async (): Promise<void> => {
         if (!newDataKey.trim() || !newDataValue.trim()) {
