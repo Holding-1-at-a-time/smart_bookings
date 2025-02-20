@@ -33,7 +33,7 @@
     "swr": "^2.3.2",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
-    "tar": "6.2.1",
+    "tar": "7.0.0",
     "undici": "5.28.5",
     "vercel": "^41.1.4"
   },
