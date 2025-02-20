@@ -74,9 +74,7 @@ const DataComponent = ({ Id }): JSX.Element => {
                 description: errorMessage,
                 variant: "destructive",
             });
-        }
-    if (error) {
-        return <div>Error: {error.message}</div>;
+        if (error) {
     }
 
     if (LoadingSpinner) {
