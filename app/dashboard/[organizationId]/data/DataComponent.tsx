@@ -67,13 +67,14 @@ const DataComponent = ({ Id }): JSX.Element => {
                 variant: "default",
             });
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            console.error('Error adding data:', error);
             toast({
-                title: "Error adding data",
-                description: (error as Error).message,
+                title: "Error adding data", 
+                description: errorMessage,
                 variant: "destructive",
             });
         }
-    };
     if (error) {
         return <div>Error: {error.message}</div>;
     }
