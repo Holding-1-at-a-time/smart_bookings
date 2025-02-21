@@ -31,17 +31,42 @@ export default defineSchema({
     role: v.string(),
     metadata: v.optional(v.any()),
     updatedAt: v.string(),
+    userSessions: v.array(v.object({
+      token: v.string(),
+      refreshToken: v.string(),
+    })),
+    sessions: v.array(v.object({
+      token: v.string(),
+      createdAt: v.string(),
+      updatedAt: v.string(),
+      refreshToken: v.string(),
+    }))
   })
     .index("by_clerk_id", ["clerkId"])
-    .index("by_organization", ["organizationId"]),
+    .index("by_organization", ["organizationId"])
+    .index("by_email", ["email"])
+    .index("by_role", ["role"])
+    .index("by_organization_and_role", ["organizationId", "role"]),
 
   serviceCategories: defineTable({
+    id: v.id("serviceCategories"),
     organizationId: v.id("organizations"),
+    category: v.array(v.object({
+      id: v.id("serviceCategories"),
+      name: v.string(),
+      description: v.optional(v.string()),
+      order: v.number(),
+      isActive: v.boolean(),
+    })),
     name: v.string(),
     description: v.optional(v.string()),
     order: v.number(),
     isActive: v.boolean(),
-  }).index("by_organization", ["organizationId"]),
+  }).index("by_organization", ["organizationId"])
+    .index("by_name", ["name"])
+    .index("by_order", ["order"])
+    .index("by_organization_and_name", ["organizationId", "name"])
+    .index("by_organization_and_order", ["organizationId", "order"]),
 
   services: defineTable({
     organizationId: v.id("organizations"),
@@ -58,14 +83,22 @@ export default defineSchema({
     cleanupTime: v.optional(v.number()),
   })
     .index("by_organization", ["organizationId"])
-    .index("by_category", ["categoryId"]),
+    .index("by_category", ["categoryId"])
+    .index("by_name", ["name"])
+    .index("by_duration", ["duration"])
+    .index("by_price", ["price"])
+    .index("by isActive", ["isActive"]),
 
   availability: defineTable({
     organizationId: v.id("organizations"),
     dayOfWeek: v.number(),
     startTime: v.string(),
     endTime: v.string(),
-  }).index("by_organization", ["organizationId"]),
+  }).index("by_organization", ["organizationId"])
+  .index("by_day_of_week", ["dayOfWeek"])
+  .index("by_start_time", ["startTime"])
+  .index("by_end_time", ["endTime"])
+  .index("by_organization_and_day_of_week", ["organizationId", "dayOfWeek"]),
 
   bookings: defineTable({
     organizationId: v.id("organizations"),
@@ -84,7 +117,11 @@ export default defineSchema({
     .index("by_organization", ["organizationId"])
     .index("by_user", ["userId"])
     .index("by_service", ["serviceId"])
-    .index("by_date", ["date"]),
+    .index("by_date", ["date"])
+    .index("by_status", ["status"])
+    .index("by_customer_name", ["customerName"])
+    .index("by_customer_email", ["customerEmail"])
+    .index("by_customer_phone", ["customerPhone"]),
 
   organizationData: defineTable({
     organizationId: v.id("organizations"),
@@ -92,7 +129,10 @@ export default defineSchema({
     value: v.string(),
     createdAt: v.string(),
   })
-    .index("by_organization", ["organizationId"])
-    .index("by_organization_and_key", ["organizationId", "key"]),
+  .index("by_key", ["key"])
+  .index("by_organization", ["organizationId"])
+  .index("by_organization_and_key", ["organizationId", "key"])
+  .index("by_organization_and_value", ["organizationId", "value"])
+  .index("by_organization_and_key_and_value", ["organizationId", "key", "value"]),
 })
 

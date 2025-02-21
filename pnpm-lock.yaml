@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@babel/core':
+        specifier: 7.26.9
+        version: 7.26.9
       '@clerk/backend':
         specifier: ^1.24.2
         version: 1.24.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -4031,10 +4034,6 @@ packages:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
     engines: {node: '>=6'}
 
-  tar@4.4.18:
-    resolution: {integrity: sha512-ZuOtqqmkV9RE1+4odd+MhBpibmCxNP6PJhH/h2OqNuotTX7/XHPZQJv2pKvWMplFH9SIZZhitehh6vBH6LO8Pg==}
-    engines: {node: '>=4.5'}
-
   tar@7.0.0:
     resolution: {integrity: sha512-spRiR+tDOVD01YeeWBUbNa6HoQErjztT2BXxZWmxJDgaCVgZMO1RAoeKpybiUbr8FxKsUm/svtiEyIRZeWYhAw==}
     engines: {node: '>=18'}
@@ -6355,7 +6354,7 @@ snapshots:
   dot-case@3.0.4:
     dependencies:
       no-case: 3.0.4
-      tslib: 2.8.1
+      tslib: 2.4.1
 
   dunder-proto@1.0.1:
     dependencies:
@@ -7738,7 +7737,7 @@ snapshots:
 
   lower-case@2.0.2:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.4.1
 
   lru-cache@10.4.3: {}
 
@@ -7873,7 +7872,7 @@ snapshots:
   no-case@3.0.4:
     dependencies:
       lower-case: 2.0.2
-      tslib: 2.8.1
+      tslib: 2.4.1
 
   node-fetch@2.6.7:
     dependencies:

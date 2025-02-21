@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Id } from "@/convex/_generated/dataModel"
 import ServiceForm from "./components/ServiceForm"
-import ServiceList from "./components/ServiceList"
+import ServiceList from "./components/CategoryList"
 import ErrorBoundary from "@/components/ErrorBoundery"
 import { useToast } from "@/hooks/use-toast"
 
@@ -29,7 +29,7 @@ export default function ServicesPage({ params }: { params: { organizationId: str
     const { organization } = useOrganization()
     const { toast } = useToast()
     const [showCreateForm, setShowCreateForm] = useState(false)
-    const [selectedCategoryId, setSelectedCategoryId] = useState<Id<"serviceCategories"> | undefined>()
+    const [selectedCategoryId, setSelectedCategoryId] = useState<Id<"categories"> | undefined>()
 
     const deleteService = useMutation(api.services.deleteService)
     const categories = useQuery(api.services.listServiceCategories, {
