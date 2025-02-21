@@ -2,7 +2,7 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 20/02/2025 - 16:37:19
+    * @created          : 20/02/2025 - 17:04:29
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
@@ -12,65 +12,36 @@
 **/
 "use client"
 
-import ErrorBoundary from "@/components/ErrorBoundery"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { useState } from "react"
+import { useOrganization } from "@clerk/nextjs"
+import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Id } from "@/convex/_generated/dataModel"
+import ServiceForm from "./components/ServiceForm"
+import ServiceList from "./components/ServiceList"
+import ErrorBoundary from "@/components/ErrorBoundery"
 import { useToast } from "@/hooks/use-toast"
-import { useOrganization } from "@clerk/clerk-react"
-import { useQuery, useMutation } from "convex/react"
-import React from "react"
-import { Button } from "react-day-picker"
 
-
-
-export default function ServicesPage() {
+export default function ServicesPage({ params }: { params: { organizationId: string } }) {
     const { organization } = useOrganization()
     const { toast } = useToast()
-    const [newServiceName, setNewServiceName] = React.useState("")
-    const [newServicePrice, setNewServicePrice] = React.useState("")
-    const [newServiceDuration, setNewServiceDuration] = React.useState("")
+    const [showCreateForm, setShowCreateForm] = useState(false)
+    const [selectedCategoryId, setSelectedCategoryId] = useState<Id<"serviceCategories"> | undefined>()
 
-    const services = useQuery(api.services.listServices, {
-        organizationId: organization?.id ?? "",
+    const deleteService = useMutation(api.services.deleteService)
+    const categories = useQuery(api.services.listServiceCategories, {
+        organizationId: params.organizationId as Id<"organizations">,
     })
 
-    const addService = useMutation(api.services.addService)
-    const deleteService = useMutation(api.services.deleteService)
-
-    const handleAddService = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!organization) return
-
+    const handleDeleteService = async (serviceId: Id<"services">) => {
         try {
-            await addService({
-                organizationId: organization.id,
-                name: newServiceName,
-                price: Number.parseFloat(newServicePrice),
-                duration: Number.parseInt(newServiceDuration),
-            })
-            setNewServiceName("")
-            setNewServicePrice("")
-            setNewServiceDuration("")
-            toast({
-                title: "Service added",
-                description: "The new service has been successfully added.",
-            })
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to add the service. Please try again.",
-                variant: "destructive",
-            })
-        }
-    }
-
-    const handleDeleteService = async (serviceId: string) => {
-        try {
-            await deleteService({ serviceId })
+            await deleteService({ id: serviceId })
             toast({
                 title: "Service deleted",
-                description: "The service has been successfully deleted.",
+                description: "The service has been deleted successfully.",
             })
         } catch (error) {
             console.error("Failed to delete service:", error);
@@ -89,67 +60,64 @@ export default function ServicesPage() {
     return (
         <ErrorBoundary>
             <div className="space-y-6">
-                <h1 className="text-3xl font-bold">Services</h1>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Add New Service</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleAddService} className="space-y-4">
-                            <Input
-                                placeholder="Service Name"
-                                value={newServiceName}
-                                onChange={(e) => setNewServiceName(e.target.value)}
-                                required
-                            />
-                            <Input
-                                type="number"
-                                placeholder="Price"
-                                value={newServicePrice}
-                                onChange={(e) => setNewServicePrice(e.target.value)}
-                                required
-                            />
-                            <Input
-                                type="number"
-                                placeholder="Duration (minutes)"
-                                value={newServiceDuration}
-                                onChange={(e) => setNewServiceDuration(e.target.value)}
-                                required
-                            />
-                            <Button type="submit">Add Service</Button>
-                        </form>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Existing Services</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {services === undefined ? (
-                            <div>Loading...</div>
-                        ) : services.length > 0 ? (
-                            <ul className="space-y-2">
-                                {services.map((service: { _id: React.Key | null | undefined; name: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined; price: number; duration: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined }) => (
-                                    <li key={service._id} className="flex justify-between items-center">
-                                        <div>
-                                            <p className="font-medium">{service.name}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                ${service.price.toFixed(2)} - {service.duration} minutes
-                                            </p>
-                                        </div>
-                                        <Button variant="destructive" size="sm" onClick={() => handleDeleteService(service._id)}>
-                                            Delete
-                                        </Button>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-muted-foreground">No services available</p>
-                        )}
-                    </CardContent>
-                </Card>
+                <div className="flex justify-between items-center">
+                    <h1 className="text-3xl font-bold">Services</h1>
+                    <Button onClick={() => setShowCreateForm(true)}>Add Service</Button>
+                </div>
+                <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Create New Service</DialogTitle>
+                        </DialogHeader>
+                        <ServiceForm
+                            organizationId={params.organizationId as Id<"organizations">}
+                            categoryId={selectedCategoryId}
+                            onSuccess={() => setShowCreateForm(false)}
+                        />
+                    </DialogContent>
+                </Dialog>
+                {(categories?.length ?? 0) > 0 ? (
+                    categories?.map((category) => (
+                        <Card key={category._id}>
+                            <CardHeader>
+                                <CardTitle>{category.name}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <ServiceList
+                                    organizationId={params.organizationId as Id<"organizations">}
+                                    categoryId={category._id}
+                                    onEdit={() => { }}
+                                    onDelete={handleDeleteService}
+                                />
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : (
+                    <Card>
+                        <CardContent className="py-6">
+                            No categories found. Please create a category first.
+                        </CardContent>
+                    </Card>
+                )}
+                {selectedCategoryId && (
+                    <Button onClick={() => setSelectedCategoryId(undefined)}>Back to All Services</Button>
+                )}
             </div>
-        </ErrorBoundary>
-    )
+            <div>
+                {selectedCategoryId && (
+                    <Card className="mt-6">
+                        <CardContent className="py-6">
+                            <ServiceList
+                                organizationId={params.organizationId as Id<"organizations">}
+                                categoryId={selectedCategoryId}
+                                onEdit={() => { }}
+                                onDelete={handleDeleteService}
+                            />
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+        </ErrorBoundary >
+    );
 }
 
