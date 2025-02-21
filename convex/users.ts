@@ -10,33 +10,12 @@
  * - Author          : rrome
  * - Modification    : 
  **/
-import { v } from "convex/values"
-import { internalMutation, mutation, query } from "./_generated/server"
 
-
-/**
- * Internal mutation to delete a user and their sessions.
- */
-export const internalDeleteUser = internalMutation({
-    args: { userId: v.id("users") },
-    handler: async (ctx, args) => {
-        console.log("internalDeleteUser", args)
-        const { userId } = args
-
-        // Delete user's sessions
-        const sessions = await ctx.db
-            .query("userSessions")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
-            .collect()
-
-        for (const session of sessions) {
-            await ctx.db.delete(session._id)
-        }
-
-        // Delete the user
-        await ctx.db.delete(userId)
-    },
-})
+import { Mutation } from "./_generated/server";
+import { query } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
+import { GenericId } from "./_generated/server";
+import { v } from "convex/values";
 
 /**
  * Public mutation to create or update a user.
@@ -44,21 +23,82 @@ export const internalDeleteUser = internalMutation({
 export const createOrUpdateUser = mutation({
     args: {
         clerkId: v.string(),
+        metadata: v.optional(v.object()),
+        organizationId: v.optional(v.id("organizations")),
         name: v.string(),
         email: v.string(),
         role: v.string(),
-        organizationId: v.optional(v.id("organizations")),
-        metadata: v.optional(v.any()),
+        updatedAt: v.string(),
     },
-    handler: async (ctx, args) => {
-        console.log("createOrUpdateUser", args)
-        return await ctx.db.insert("users", args)
-    },
-})
+    handler: async(ctx, args: CreateOrUpdateUser Args): Promise<CreateOrUpdateUser Result> => {
+    try {
+        const existingUser = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", q => q.eq("clerkId", args.clerkId))
+            .unique();
 
+        if (existingUser) {
+            const updatedUser = await ctx.db.patch(existingUser._id, {
+                metadata: args.metadata,
+                organizationId: args.organizationId,
+                name: args.name,
+                email: args.email,
+                role: args.role,
+                updatedAt: new Date().toISOString(),
+
+            });
+            return { user: updatedUser };
+        }
+
+        const newUser = await ctx.db.insert("users", {
+            clerkId: args.clerkId,
+            metadata: args.metadata,
+            organizationId: args.organizationId,
+            name: args.name,
+            email: args.email,
+            role: args.role,
+            updatedAt: args.updatedAt,
+        });
+        return { user: newUser };
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error(error.message);
+        }
+        throw error("Failed to create or update user");
+    }
+},
+});
 /**
- * Public mutation to delete a user.
+ * Query to search users by name or email, optionally filtered by organization.
  */
+export const searchUsers = query({
+    args: {
+        searchTerm: v.string(),
+        organizationId: v.optional(v.id("organizations")),
+        limit: v.optional(v.number()),
+    },
+    returns: v.array(v.type(User)),
+    handler: async (ctx, args) => {
+        const { searchTerm, organizationId, limit } = args;
+
+        if (!searchTerm) {
+            throw new Error("Search term is required");
+        }
+
+        let userQuery = ctx.db.query("users").withIndex("search_name_email", q => q.eq("name", searchTerm).or(q.eq("email", searchTerm)));
+
+        if (organizationId) {
+            userQuery = userQuery.filter(q => q.eq("organizationId", organizationId));
+        }
+
+        if (limit) {
+            userQuery = userQuery.take(limit);
+        }
+
+        return await userQuery.collect();
+    },
+});
+
 export const deleteUser = mutation({
     args: { userId: v.id("users") },
     handler: async (ctx, args) => {
@@ -72,9 +112,6 @@ export const deleteUser = mutation({
     },
 })
 
-/**
- * Public mutation to update a user's role.
- */
 export const updateUserRole = mutation({
     args: { userId: v.id("users"), newRole: v.string() },
     handler: async (ctx, args) => {
@@ -91,9 +128,6 @@ export const updateUserRole = mutation({
     },
 })
 
-/**
- * Public mutation to update a user's organization.
- */
 export const updateUserOrganization = mutation({
     args: { userId: v.id("users"), organizationId: v.optional(v.id("organizations")) },
     handler: async (ctx, args) => {
@@ -110,9 +144,6 @@ export const updateUserOrganization = mutation({
     },
 })
 
-/**
- * Query to get a user by their ID.
- */
 export const getUser = query({
     args: { userId: v.id("users") },
     handler: async (ctx, args) => {
@@ -121,9 +152,6 @@ export const getUser = query({
     },
 })
 
-/**
- * Query to get a user by their Clerk ID.
- */
 export const getUserByClerkId = query({
     args: { clerkId: v.string() },
     handler: async (ctx, args) => {
@@ -135,9 +163,6 @@ export const getUserByClerkId = query({
     },
 })
 
-/**
- * Query to list users, optionally filtered by organization.
- */
 export const listUsers = query({
     args: {
         organizationId: v.optional(v.id("organizations")),
@@ -168,80 +193,38 @@ export const listUsers = query({
     },
 })
 
-/**
- * Query to search users by name or email, optionally filtered by organization.
- */
-/**
- * Query to search users by name or email, optionally filtered by organization.
- *
- * @param ctx The Convex context
- * @param args The query arguments
- * @param args.searchTerm The search term to query
- * @param args.organizationId The ID of the organization to filter by, if any
- * @param args.limit The maximum number of results to return, if any
- * @returns An array of users matching the query
- */
-/**
- * Searches for users based on the provided search term, organization ID, and limit.
- *
- * @param {string} searchTerm - The term to search for in the users' names and emails.
- * @param {string} [organizationId] - The ID of the organization to filter by.
- * @param {number} [limit] - The maximum number of results to return.
- * @returns {Promise<User[]>} A promise that resolves to an array of users that match the search criteria.
- */
-/**
- * Searches for users based on the provided search term, organization ID, and limit.
- *
- * @param {SearchUsersArgs} args - The search arguments.
- * @returns {Promise<User[]>} A promise that resolves to an array of users that match the search criteria.
- */
-export const searchUsers = query({
-    args: {
-        searchTerm: v.string(),
-        organizationId: v.optional(v.string()),
-        limit: v.optional(v.number()),
-    },
-    returns: v.array(v.type(User)),
-    handler: async (ctx, args) => {
-        const { searchTerm, organizationId, limit } = args;
+export const searchUsers = query<{
+    searchTerm: string;
+    organizationId?: string;
+    limit?: number;
+}, User[]>({
+    handler: async (ctx, { searchTerm, organizationId, limit }) => {
+        if (!searchTerm) {
+            throw new Error("Search term is required");
+        }
 
-        const userQuery = ctx.db
-            .query("users")
-            .withIndex("by_name_email", (q) => 
-                q.eq("name", searchTerm).or(q.eq("email", searchTerm))
-            );
+        let userQuery = ctx.db.query("users").withIndex("search_name_email", q => q.eq("name", searchTerm).or(q.eq("email", searchTerm)));
 
         if (organizationId) {
-            userQuery.filter((q) => q.field("organizationId").eq(organizationId));
+            userQuery.filter(q => q.eq("organizationId", organizationId));
         }
 
         if (limit) {
             userQuery.take(limit);
         }
-
         return await userQuery.collect();
-    },
-},
-);
-
-export interface SearchUsersArgs {
-    searchTerm: string;
-    organizationId?: string;
-    limit?: number;
+    }
 }
-
-/**
- * Mutation to store a user's session information.
- */
+)
 export const storeUserSession = mutation({
     args: {
         clerkId: v.string(),
         name: v.string(),
         email: v.string(),
-        userName: v.optional(v.string()),
+        userName: v.optional(v.string),
         firstName: v.string(),
         familyName: v.string(),
-        phoneNumber: v.optional(v.string()),
+        phoneNumber: v.optional(v.string),
         emailVerified: v.boolean(),
         hasVerifiedContactInfo: v.boolean(),
         createdAt: v.string(),
@@ -250,12 +233,12 @@ export const storeUserSession = mutation({
         unsafeMetadata: v.any(),
         privateMetadata: v.any(),
         organizationId: v.optional(v.id("organizations")),
-        organizationName: v.optional(v.string()),
-        organizationRole: v.optional(v.string()),
-        organizationSlug: v.optional(v.string()),
-        organizationLogo: v.optional(v.string()),
-        hasOrgLogo: v.optional(v.boolean()),
-        organizationPermissions: v.optional(v.array(v.string())),
+        organizationName: v.optional(v.string),
+        organizationRole: v.optional(v.string),
+        organizationSlug: v.optional(v.string),
+        organizationLogo: v.optional(v.string),
+        hasOrgLogo: v.optional(v.boolean),
+        organizationPermissions: v.optional(v.array(v.string)),
     },
     handler: async (ctx, args) => {
         const { clerkId, name, email, organizationRole, organizationId, ...metadataFields } = args
@@ -265,11 +248,10 @@ export const storeUserSession = mutation({
             name,
             email,
             role: organizationRole || "member",
-            organizationId,
+            organizationId: organizationId || null,
             metadata: metadataFields,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         })
     },
 })
-

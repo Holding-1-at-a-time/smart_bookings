@@ -11,8 +11,9 @@
     * - Modification    : 
 **/
 import React from 'react';
-import { currentUser } from '@clerk/nextjs';
 import { OrganizationList, CreateOrganization } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
+import { JSX } from 'react/jsx-runtime';
 
 export default async function OrganizationPage(): Promise<JSX.Element> {
     const user = await currentUser();

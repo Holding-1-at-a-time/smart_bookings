@@ -16,6 +16,7 @@ import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from '@clerk/themes'
+import { cn } from "@/lib/utils";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,8 +59,7 @@ export default function RootLayout({
       <html lang="en">
         <header />
         <title>Auto Detailing Scheduling System</title>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        <body className={cn(`${geistSans.variable} ${geistMono.variable} antialiased`, 'bg-gray-100 text-white min-h-screen')}
         >
           <ConvexClientProvider>{children}</ConvexClientProvider>
           <footer />
