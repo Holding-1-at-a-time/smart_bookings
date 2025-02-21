@@ -15,13 +15,24 @@ import { v } from "convex/values"
 
 export default defineSchema({
   organizations: defineTable({
+    id: v.id("organizations"),
     name: v.string(),
     ownerId: v.string(),
     settings: v.object({
       timezone: v.string(),
       currency: v.string(),
+      locale: v.string(),
+      address: v.string(),
+      phone: v.string(),
+      email: v.string(),
+      businessHours: v.string(),
+      website: v.string(),
+      logo: v.optional(v.string()),
+    slug: v.string(),
     }),
-  }).index("by_owner", ["ownerId"]),
+  })
+  .index("by_name", ["name"])
+  .index("by_owner", ["ownerId"]),
 
   users: defineTable({
     organizationId: v.id("organizations"),

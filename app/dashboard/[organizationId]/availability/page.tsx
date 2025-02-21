@@ -2,45 +2,39 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 20/02/2025 - 16:03:00
+    * @created          : 21/02/2025 - 07:57:33
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 20/02/2025
+    * - Date            : 21/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
+import { redirect } from "next/navigation"
+import type { Id } from "@/convex/_generated/dataModel"
+import AvailabilityManager from "@/components/availability/AvailabilityManager"
+import { auth, currentUser } from "@clerk/nextjs/server"
 
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import { JSX } from "react";
+export default async function AvailabilityPage({ params }: { params: { organizationId: string } }) {
+    const { userId, orgId } = await auth()
 
-/**
- * AvailabilityPage
- *
- * This page renders the availability management component for the currently logged-in user.
- *
- * The page is protected by Clerk's authentication middleware, so only logged-in users can access it.
- *
- * @returns A JSX element representing the availability page.
- */
-export default async function AvailabilityPage(): Promise<JSX.Element> {
-    /**
-     * Get the currently logged-in user's ID and organization ID from Clerk's authentication middleware.
-     *
-     * If the user is not logged in, redirect them to the homepage.
-     */
-    const { userId, orgId } = await auth();
+    // Get the Backend API User object when you need access to the user's information
+
+    const user = await currentUser()
 
     if (!userId || !orgId) {
-        redirect("/");
+        redirect("/")
+    }
+
+    if (!user) {
+        redirect("/sign-in")
     }
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-6">Availability</h1>
-            {/* Add your availability management component here */}
+        <div className="container mx-auto py-8">
+            <h1 className="text-3xl font-bold mb-6">Availability Management</h1>
+            <AvailabilityManager organizationId={params.organizationId as Id<"organizations">} />
         </div>
-    );
+    )
 }
 
