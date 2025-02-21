@@ -40,7 +40,7 @@ export default function WaitlistPage(): JSX.Element {
                     elements: {
                         card: "bg-gray-800 border-gray-700",
                         headerTitle: "text-white",
-                        headerSubtitle: "text-gray-300",
+                        headerSubtitle: "text-gray-400",
                         formButtonPrimary: "bg-primary hover:bg-primary/90 text-white",
                         formFieldLabel: "text-gray-300",
                         formFieldInput: "bg-gray-700 border-gray-600 text-white",
