@@ -14,6 +14,8 @@
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 
+
+
 /**
  * Get bookings for a given organization and date
  * @param organizationId The ID of the organization
@@ -99,7 +101,7 @@ export const createBooking = mutation({
             customerPhone,
             totalPrice: service.price,
             notes: "",
-            updatedOrganizationAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
         });
     },
 })
@@ -120,6 +122,30 @@ export const cancelBooking = mutation({
         await ctx.db.patch(args.bookingId, { status: "cancelled" })
         return true
     },
+})
+
+export const resolvers = query({
+    bookings: async (parent, args, ctx) => {
+        return await ctx.db.query("bookings").collect()
+    },
+})
+
+export const getBookingsByOrganization = query({
+    args: { organizationId: v.id("organizations"),
+        serviceId: v.id("services"),
+        date: v.date(),
+        startTime: v.time(),
+        endTime: v.time(),
+        },
+        handler: async (ctx, args) => {
+            return await ctx.db.query("bookings")
+            .filter("organizationId", args.organizationId)
+            .filter("serviceId", args.serviceId)
+            .filter("date", args.date)
+            .filter("startTime", args.startTime)
+            .filter("endTime", args.endTime)
+            .collect()
+        },
 })
 
 /**
