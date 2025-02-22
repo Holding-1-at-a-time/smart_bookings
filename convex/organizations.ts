@@ -57,7 +57,7 @@ export const listOrganizationData = query({
             .order("desc");
 
         if (args.cursor) {
-            query.filter(q => q.gt(q.field("_id"), ...args.organizationId));
+            query.filter(q => q.gt(q.field("_id"), args.organizationId));
         }
 
         const data = await query.take(count);
