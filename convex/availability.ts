@@ -1,66 +1,268 @@
 /**
- * @description      : 
- * @author           : rrome
- * @group            : 
- * @created          : 21/02/2025 - 09:01:26
- * 
- * MODIFICATION LOG
- * - Version         : 1.0.0
- * - Date            : 21/02/2025
- * - Author          : rrome
- * - Modification    : 
- */
+    * @description      : 
+    * @author           : rrome
+    * @group            : 
+    * @created          : 22/02/2025 - 14:32:09
+    * 
+    * MODIFICATION LOG
+    * - Version         : 1.0.0
+    * - Date            : 22/02/2025
+    * - Author          : rrome
+    * - Modification    : 
+**/
 import { v } from "convex/values"
-import { mutation, query } from "./_generated/server"
+import { action, mutation, query } from "./_generated/server"
+import { generateText } from "ai"
+import { groq } from "@ai-sdk/groq"
 
-/**
- * Query to get the availability of a specific organization
- * @param organizationId - The id of the organization to get the availability for
- * @returns The availability of the specified organization
- */
-export const getAvailability = query({
-    args: { organizationId: v.id("organizations") },
+export const checkAvailability = action({
+    args: {
+        providerId: v.id("users"),
+        organizationId: v.id("organizations"),
+        date: v.string(),
+        startTime: v.string(),
+        duration: v.number(),
+    },
     handler: async (ctx, args) => {
-        // Get all availability records with the specified organizationId
-        return await ctx.db
-                    .query("availability")
-                    .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-                    .collect();
+        const { providerId, organizationId, date, startTime, duration } = args
+
+        // Fetch provider's availability
+        const availability = await ctx.runQuery("availability:getProviderAvailability", {
+            providerId,
+            organizationId,
+            date,
+        })
+
+        // Fetch existing bookings
+        const bookings = await ctx.runQuery("bookings:getProviderBookings", {
+            providerId,
+            organizationId,
+            date,
+        })
+
+        // Use Grok to analyze availability and bookings
+        const prompt = `
+      Given the following availability and bookings for a service provider, determine if the requested time slot is available:
+
+      Provider Availability:
+      ${JSON.stringify(availability)}
+
+      Existing Bookings:
+      ${JSON.stringify(bookings)}
+
+      Requested Booking:
+      Date: ${date}
+      Start Time: ${startTime}
+      Duration: ${duration} minutes
+
+      Respond with either "Available" or "Not Available" followed by a brief explanation.
+    `
+
+        const { text } = await generateText({
+            model: groq("gemma2-9b-it"),
+            prompt,
+        })
+
+        const isAvailable = text.toLowerCase().startsWith("available")
+
+        return {
+            isAvailable,
+            explanation: text,
+        }
     },
 })
 
-/**
- * Mutation to update the availability of a specific organization
- * @param organizationId - The id of the organization to update the availability for
- * @param dayOfWeek - The day of the week to update the availability for
- * @param startTime - The new start time of the availability
- * @param endTime - The new end time of the availability
- */
-export const updateAvailability = mutation({
+export const updateProviderAvailability = mutation({
     args: {
+        providerId: v.id("users"),
         organizationId: v.id("organizations"),
-        dayOfWeek: v.number(),
-        startTime: v.string(),
-        endTime: v.string(),
+        availabilitySlots: v.array(
+            v.object({
+                dayOfWeek: v.number(),
+                startTime: v.string(),
+                endTime: v.string(),
+                isRecurring: v.boolean(),
+                date: v.optional(v.string()),
+            }),
+        ),
     },
     handler: async (ctx, args) => {
-        const { organizationId, dayOfWeek, startTime, endTime } = args
+        const { providerId, organizationId, availabilitySlots } = args
 
-        // Check if the availability record for the specified organization and day of week already exists
-        const existingAvailability = await ctx.db
+        // Delete existing availability for the provider
+        await ctx.db
             .query("availability")
-            .withIndex("by_organization_and_day_of_week", (q) =>
-                q.eq("organizationId", organizationId).eq("dayOfWeek", dayOfWeek),
-            )
-            .first()
+            .withIndex("by_provider", (q) => q.eq("providerId", providerId))
+            .delete()
 
-        // If the availability record already exists, update it
-        if (existingAvailability) {
-            await ctx.db.patch(existingAvailability._id, { startTime, endTime })
-        } else {
-            // If the availability record does not exist, create a new one
-            await ctx.db.insert("availability", { organizationId, dayOfWeek, startTime, endTime })
+        // Insert new availability slots
+        for (const slot of availabilitySlots) {
+            await ctx.db.insert("availability", {
+                providerId,
+                organizationId,
+                ...slot,
+                serviceId: slot.serviceId,
+            })
         }
+
+        return true
+    },
+})
+
+export const getProviderAvailability = query({
+    args: {
+        providerId: v.id("users"),
+        organizationId: v.id("organizations"),
+        date: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const { providerId, organizationId, date } = args
+
+        let availabilityQuery = ctx.db
+            .query("availability")
+            .withIndex("by_provider", (q) => q.eq("providerId", providerId))
+            .filter((q) => q.eq(q.field("organizationId"), organizationId))
+
+        if (date) {
+            const dayOfWeek = new Date(date).getDay()
+            availabilityQuery = availabilityQuery.filter((q) =>
+                q.or(
+                    q.and(q.eq(q.field("isRecurring"), true), q.eq(q.field("dayOfWeek"), dayOfWeek)),
+                    q.and(q.eq(q.field("isRecurring"), false), q.eq(q.field("date"), date)),
+                ),
+            )
+        }
+
+        return await availabilityQuery.collect()
+    },
+})
+
+export const checkAvailability = action({
+    args: {
+        providerId: v.id("users"),
+        organizationId: v.id("organizations"),
+        date: v.string(),
+        startTime: v.string(),
+        duration: v.number(),
+    },
+    handler: async (ctx, args) => {
+        const { providerId, organizationId, date, startTime, duration } = args
+
+        // Fetch provider's availability
+        const availability = await ctx.runQuery("availability:getProviderAvailability", {
+            providerId,
+            organizationId,
+            date,
+        })
+
+        // Fetch existing bookings
+        const bookings = await ctx.runQuery("bookings:getProviderBookings", {
+            providerId,
+            organizationId,
+            date,
+        })
+
+        // Fetch RL model
+        const rlModel = await ctx.runQuery("reinforcementLearning:getRLModel", { organizationId })
+
+        // Use Grok to analyze availability and bookings, incorporating the RL model
+        const prompt = `
+      Given the following availability, bookings, and RL model for a service provider, determine if the requested time slot is available:
+
+      Provider Availability:
+      ${JSON.stringify(availability)}
+
+      Existing Bookings:
+      ${JSON.stringify(bookings)}
+
+      RL Model:
+      ${JSON.stringify(rlModel)}
+
+      Requested Booking:
+      Date: ${date}
+      Start Time: ${startTime}
+      Duration: ${duration} minutes
+
+      Use the RL model to inform your decision. Respond with either "Available" or "Not Available" followed by a brief explanation and a confidence score between 0 and 1.
+    `
+
+        const { text } = await generateText({
+            model: groq("gemma2-9b-it"),
+            prompt,
+        })
+
+        const [availability, explanation, confidenceScore] = text.split("\n")
+        const isAvailable = availability.toLowerCase().trim() === "available"
+
+        return {
+            isAvailable,
+            explanation: explanation.trim(),
+            confidenceScore: Number.parseFloat(confidenceScore),
+        }
+    },
+})
+
+export const updateProviderAvailability = mutation({
+    args: {
+        providerId: v.id("users"),
+        organizationId: v.id("organizations"),
+        availabilitySlots: v.array(
+            v.object({
+                dayOfWeek: v.number(),
+                startTime: v.string(),
+                endTime: v.string(),
+                isRecurring: v.boolean(),
+                date: v.optional(v.string()),
+            }),
+        ),
+    },
+    handler: async (ctx, args) => {
+        const { providerId, organizationId, availabilitySlots } = args
+
+        // Delete existing availability for the provider
+        await ctx.db
+            .query("availability")
+            .withIndex("by_provider", (q) => q.eq("providerId", providerId))
+            .delete()
+
+        // Insert new availability slots
+        for (const slot of availabilitySlots) {
+            await ctx.db.insert("availability", {
+                providerId,
+                organizationId,
+                ...slot,
+            })
+        }
+
+        return true
+    },
+})
+
+export const getProviderAvailability = query({
+    args: {
+        providerId: v.id("users"),
+        organizationId: v.id("organizations"),
+        date: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const { providerId, organizationId, date } = args
+
+        let availabilityQuery = ctx.db
+            .query("availability")
+            .withIndex("by_provider", (q) => q.eq("providerId", providerId))
+            .filter((q) => q.eq(q.field("organizationId"), organizationId))
+
+        if (date) {
+            const dayOfWeek = new Date(date).getDay()
+            availabilityQuery = availabilityQuery.filter((q) =>
+                q.or(
+                    q.and(q.eq(q.field("isRecurring"), true), q.eq(q.field("dayOfWeek"), dayOfWeek)),
+                    q.and(q.eq(q.field("isRecurring"), false), q.eq(q.field("date"), date)),
+                ),
+            )
+        }
+
+        return await availabilityQuery.collect()
     },
 })
 

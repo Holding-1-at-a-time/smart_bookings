@@ -2,17 +2,17 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 21/02/2025 - 08:03:01
+    * @created          : 22/02/2025 - 15:04:04
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 21/02/2025
+    * - Date            : 22/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
@@ -24,11 +24,16 @@ import { Calendar } from "@/components/ui/calendar"
 
 interface BookingFormProps {
     organizationId: Id<"organizations">
+    services: {
+        _id: Id<"services">
+        name: string
+        duration: number
+        price: number
+    }[]
 }
 
-export default function BookingForm({ organizationId }: BookingFormProps) {
+export default function BookingForm({ organizationId, services }: BookingFormProps) {
     const { toast } = useToast()
-    const services = useQuery(api.services.listServices, { organizationId })
     const createBooking = useMutation(api.bookings.createBooking)
 
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
@@ -37,6 +42,25 @@ export default function BookingForm({ organizationId }: BookingFormProps) {
     const [customerName, setCustomerName] = useState<string>("")
     const [customerEmail, setCustomerEmail] = useState<string>("")
     const [customerPhone, setCustomerPhone] = useState<string>("")
+
+    const availableTimeSlots = useQuery(
+        api.bookings.getAvailableTimeSlots,
+        selectedDate && selectedService
+            ? {
+                organizationId,
+                serviceId: selectedService,
+                date: selectedDate.toISOString().split("T")[0],
+            }
+            : "skip",
+    )
+
+    useEffect(() => {
+        if (availableTimeSlots && availableTimeSlots.length > 0) {
+            setStartTime(availableTimeSlots[0])
+        } else {
+            setStartTime("")
+        }
+    }, [availableTimeSlots])
 
     const handleCreateBooking = async () => {
         if (!selectedDate || !selectedService || !startTime || !customerName || !customerEmail) {
@@ -78,10 +102,6 @@ export default function BookingForm({ organizationId }: BookingFormProps) {
         }
     }
 
-    if (services === undefined) {
-        return <div>Loading...</div>
-    }
-
     return (
         <div className="space-y-4">
             <h2 className="text-2xl font-bold">Create Booking</h2>
@@ -102,12 +122,18 @@ export default function BookingForm({ organizationId }: BookingFormProps) {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Input
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        placeholder="Start Time"
-                    />
+                    <Select onValueChange={setStartTime} value={startTime}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableTimeSlots?.map((slot) => (
+                                <SelectItem key={slot} value={slot}>
+                                    {slot}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Input
                         type="text"
                         value={customerName}
@@ -132,4 +158,3 @@ export default function BookingForm({ organizationId }: BookingFormProps) {
         </div>
     )
 }
-

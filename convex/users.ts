@@ -11,11 +11,10 @@
  * - Modification    : 
  **/
 
+import { v } from "convex/values";
 import { mutation, Mutation } from "./_generated/server";
 import { query } from "./_generated/server";
-import { internalMutation } from "./_generated/server";
-import { GenericId } from "./_generated/server";
-import { v } from "convex/values";
+
 
 /**
  * Public mutation to create or update a user.
@@ -30,7 +29,7 @@ export const createOrUpdateUser = mutation({
         role: v.string(),
         updatedAt: v.string(),
     },
-    handler: async(ctx, args: CreateOrUpdateUser Args): Promise<CreateOrUpdateUser Result> => {
+    handler: async (ctx, args: CreateOrUpdateUserArgs): Promise<CreateOrUpdateUserResult> => {
     try {
         const existingUser = await ctx.db
             .query("users")
@@ -58,6 +57,8 @@ export const createOrUpdateUser = mutation({
             email: args.email,
             role: args.role,
             updatedAt: args.updatedAt,
+            userSessions: [],
+            sessions: []
         });
         return { user: newUser };
     } catch (error) {
