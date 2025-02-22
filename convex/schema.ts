@@ -21,17 +21,21 @@ export default defineSchema({
       timezone: v.string(),
       currency: v.string(),
       locale: v.string(),
-      address: v.string(),
-      phone: v.string(),
-      email: v.string(),
-      businessHours: v.string(),
-      website: v.string(),
-      logo: v.optional(v.string()),
-    slug: v.string(),
     }),
+    address: v.string(),
+    phone: v.string(),
+    email: v.string(),
+    businessHours: v.string(),
+    website: v.string(),
+    logo: v.optional(v.string()),
+    slug: v.string(),
+    createdAt: v.string(),
   })
-  .index("by_name", ["name"])
-  .index("by_owner", ["ownerId"]),
+    .index("by_address", ["address"])
+    .index("by_phone", ["phone"])
+    .index("by_email", ["email"])
+    .index("by_website", ["website"])
+    .index("by_logo", ["logo"]),
 
   users: defineTable({
     organizationId: v.id("organizations"),
@@ -105,10 +109,10 @@ export default defineSchema({
     startTime: v.string(),
     endTime: v.string(),
   }).index("by_organization", ["organizationId"])
-  .index("by_day_of_week", ["dayOfWeek"])
-  .index("by_start_time", ["startTime"])
-  .index("by_end_time", ["endTime"])
-  .index("by_organization_and_day_of_week", ["organizationId", "dayOfWeek"]),
+    .index("by_day_of_week", ["dayOfWeek"])
+    .index("by_start_time", ["startTime"])
+    .index("by_end_time", ["endTime"])
+    .index("by_organization_and_day_of_week", ["organizationId", "dayOfWeek"]),
 
   bookings: defineTable({
     organizationId: v.id("organizations"),
@@ -139,10 +143,20 @@ export default defineSchema({
     value: v.string(),
     createdAt: v.string(),
   })
-  .index("by_key", ["key"])
-  .index("by_organization", ["organizationId"])
-  .index("by_organization_and_key", ["organizationId", "key"])
-  .index("by_organization_and_value", ["organizationId", "value"])
-  .index("by_organization_and_key_and_value", ["organizationId", "key", "value"]),
-})
+    .index("by_key", ["key"])
+    .index("by_organization", ["organizationId"])
+    .index("by_organization_and_key", ["organizationId", "key"])
+    .index("by_organization_and_value", ["organizationId", "value"])
+    .index("by_organization_and_key_and_value", ["organizationId", "key", "value"]),
 
+  customerFeedback: defineTable({
+    organizationId: v.id("organizations"),
+    bookingId: v.id("bookings"),
+    rating: v.number(),
+    comment: v.string(),
+    createdAt: v.string(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_booking", ["bookingId"])
+    .index("by_rating", ["rating"]),
+})
