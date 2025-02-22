@@ -15,7 +15,6 @@ import { v } from "convex/values"
 
 export default defineSchema({
   organizations: defineTable({
-    id: v.id("organizations"),
     name: v.string(),
     ownerId: v.string(),
     settings: v.object({
