@@ -95,7 +95,6 @@ export const createBooking = mutation({
             customerEmail,
             customerPhone,
             totalPrice: service.price,
-            userId: args.userId,
             notes: "",
             updatedOrganizationAt: new Date().toISOString(),
         });
