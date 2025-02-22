@@ -37,6 +37,14 @@ export default function AvailabilityManager({ organizationId }: AvailabilityMana
     const [endTime, setEndTime] = useState<string>("17:00")
 
     const handleUpdateAvailability = async () => {
+        if (startTime >= endTime) {
+            toast({
+                title: "Invalid time range",
+                description: "End time must be after start time",
+                variant: "destructive",
+            })
+            return
+        }
         try {
             await updateAvailability({
                 organizationId,
