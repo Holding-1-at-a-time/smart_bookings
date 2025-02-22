@@ -2,18 +2,30 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 20/02/2025 - 16:53:56
+    * @created          : 21/02/2025 - 03:38:12
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 20/02/2025
+    * - Date            : 21/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
+/**
+ * ServiceForm component.
+ *
+ * This component provides a form to create a new service for a given organization and category.
+ * It includes fields for service name, description, duration, price, features, maximum bookings per day,
+ * preparation time, and cleanup time.
+ *
+ * @param {Id<"organizations">} organizationId - The ID of the organization.
+ * @param {Id<"serviceCategories">} [categoryId] - The optional ID of the service category.
+ * @param {Function} [onSuccess] - The optional callback function to call upon successful service creation.
+ *
+ * @returns {JSX.Element} A JSX element representing the service form.
+ */
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,8 +33,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Id } from "@/convex/_generated/dataModel"
 import { useToast } from "@/hooks/use-toast"
 import { useMutation } from "convex/react"
-import { api } from "@/convex/_generated/api";
-
+import { api } from "@/convex/_generated/api"
 
 interface ServiceFormProps {
     organizationId: Id<"organizations">
@@ -32,8 +43,9 @@ interface ServiceFormProps {
 
 export default function ServiceForm({ organizationId, categoryId, onSuccess }: ServiceFormProps) {
     const { toast } = useToast()
-    const createService = useMutation(api.services.createService);
+    const createService = useMutation(api.services.createService)
 
+    // State to manage form data
     const [formData, setFormData] = useState({
         name: "",
         description: "",
@@ -45,6 +57,11 @@ export default function ServiceForm({ organizationId, categoryId, onSuccess }: S
         cleanupTime: "",
     })
 
+    /**
+     * Handle form submission.
+     * 
+     * @param {React.FormEvent} e - The form submission event.
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
@@ -80,7 +97,7 @@ export default function ServiceForm({ organizationId, categoryId, onSuccess }: S
 
             onSuccess?.()
         } catch (error) {
-            console.error("Failed to create service:", error);
+            console.error("Failed to create service:", error)
             toast({
                 title: "Error",
                 description: "Failed to create the service. Please try again.",
@@ -89,6 +106,12 @@ export default function ServiceForm({ organizationId, categoryId, onSuccess }: S
         }
     }
 
+    /**
+     * Handle changes to the features input fields.
+     * 
+     * @param {number} index - The index of the feature in the features array.
+     * @param {string} value - The new value for the feature.
+     */
     const handleFeatureChange = (index: number, value: string) => {
         const newFeatures = [...formData.features]
         newFeatures[index] = value
