@@ -67,6 +67,9 @@ export const createBooking = mutation({
         if (!service) {
             throw new Error("Service not found")
         }
+        if (!service.duration) {
+            throw new Error("Service duration is required")
+        }
 
         const bookingEndTime = addMinutes(startTime, service.duration)
 
