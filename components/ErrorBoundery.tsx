@@ -42,6 +42,7 @@ interface ErrorBoundaryState {
  * A React error boundary component that catches errors and displays a custom error page.
  */
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+
     /**
      * The constructor for the ErrorBoundary component.
      * 
@@ -49,7 +50,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
      */
     constructor(props: ErrorBoundaryProps) {
         super(props)
-        this.state = { hasError: false }
+        this.state = { hasError: false, error: null }
     }
 
     /**
