@@ -11,7 +11,7 @@
  * - Modification    : 
  **/
 
-import { Mutation } from "./_generated/server";
+import { mutation, Mutation } from "./_generated/server";
 import { query } from "./_generated/server";
 import { internalMutation } from "./_generated/server";
 import { GenericId } from "./_generated/server";
@@ -62,55 +62,13 @@ export const createOrUpdateUser = mutation({
         return { user: newUser };
     } catch (error) {
         if (error instanceof Error) {
-            throw error(error.message);
+            throw new Error(error.message);
+        } else {
+            throw new Error("An unknown error occurred.");
         }
-        throw error("Failed to create or update user");
     }
-},
+}
 });
-/**
- * Query to search users by name or email, optionally filtered by organization.
- */
-export const searchUsers = query({
-    args: {
-        searchTerm: v.string(),
-        organizationId: v.optional(v.id("organizations")),
-        limit: v.optional(v.number()),
-    },
-    returns: v.array(v.type(User)),
-    handler: async (ctx, args) => {
-        const { searchTerm, organizationId, limit } = args;
-
-        if (!searchTerm) {
-            throw new Error("Search term is required");
-        }
-
-        let userQuery = ctx.db.query("users").withIndex("search_name_email", q => q.eq("name", searchTerm).or(q.eq("email", searchTerm)));
-
-        if (organizationId) {
-            userQuery = userQuery.filter(q => q.eq("organizationId", organizationId));
-        }
-
-        if (limit) {
-            userQuery = userQuery.take(limit);
-        }
-
-        return await userQuery.collect();
-    },
-});
-
-export const deleteUser = mutation({
-    args: { userId: v.id("users") },
-    handler: async (ctx, args) => {
-        console.log("deleteUser", args)
-        const user = await ctx.db.get(args.userId)
-        if (!user) {
-            throw new Error("User not found")
-        }
-        await ctx.db.delete(args.userId)
-        return true
-    },
-})
 
 export const updateUserRole = mutation({
     args: { userId: v.id("users"), newRole: v.string() },
@@ -193,29 +151,6 @@ export const listUsers = query({
     },
 })
 
-export const searchUsers = query<{
-    searchTerm: string;
-    organizationId?: string;
-    limit?: number;
-}, User[]>({
-    handler: async (ctx, { searchTerm, organizationId, limit }) => {
-        if (!searchTerm) {
-            throw new Error("Search term is required");
-        }
-
-        let userQuery = ctx.db.query("users").withIndex("search_name_email", q => q.eq("name", searchTerm).or(q.eq("email", searchTerm)));
-
-        if (organizationId) {
-            userQuery.filter(q => q.eq("organizationId", organizationId));
-        }
-
-        if (limit) {
-            userQuery.take(limit);
-        }
-        return await userQuery.collect();
-    }
-}
-)
 export const storeUserSession = mutation({
     args: {
         clerkId: v.string(),
@@ -248,7 +183,7 @@ export const storeUserSession = mutation({
             name,
             email,
             role: organizationRole || "member",
-            organizationId: organizationId || null,
+            Id: organizationId || null,
             metadata: metadataFields,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
