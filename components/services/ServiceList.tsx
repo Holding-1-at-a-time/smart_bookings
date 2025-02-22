@@ -87,7 +87,7 @@ export default function ServiceList({
                         <p className="text-sm text-muted-foreground">{service.description}</p>
                         <div className="flex justify-between text-sm">
                             <span>{service.duration} minutes</span>
-                            <span className="font-medium">${service.price.toFixed(2)}</span>
+                            <span className="font-medium">${service.price?.toFixed(2) ?? '0.00'}</span>
                         </div>
                         {service.features.length > 0 && (
                             <div className="space-y-1">
