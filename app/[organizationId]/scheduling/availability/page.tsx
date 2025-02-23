@@ -12,7 +12,7 @@
 **/
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
@@ -22,8 +22,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
-import { Toast } from "@/components/ui/toast"
 import { toast } from "@/hooks/use-toast"
 
 interface Service {
@@ -56,9 +54,9 @@ export default function DynamicAvailabilityChecker() {
         if (selectedService && selectedDate) {
             checkAvailability()
         }
-    }, [selectedService, selectedDate])
+    }, [selectedService, selectedDate, checkAvailability])
 
-    const checkAvailability = async () => {
+    const checkAvailability = useCallback(async () => {
         if (!selectedService || !selectedDate) {
             toast({
                 title: "Error",
@@ -72,7 +70,7 @@ export default function DynamicAvailabilityChecker() {
         try {
             const selectedServiceData = services?.find((s) => s.id === selectedService)
             const { text } = await generateText({
-                model: openai("gpt-4o"),
+                model: open("gpt-4o"),
                 prompt: `Given the following data:
                  - Business hours: ${JSON.stringify(businessHours)}
                  - Existing appointments: ${JSON.stringify(appointments)}
@@ -95,7 +93,7 @@ export default function DynamicAvailabilityChecker() {
         } finally {
             setIsLoading(false)
         }
-    }
+    })
 
     return (
         <Card>

@@ -20,7 +20,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { ollama } from 'ollama-ai-provider';
 
 interface Appointment {
     id: string
@@ -57,7 +57,7 @@ export default function AppointmentCalendar() {
     const getAISuggestion = async (date: Date) => {
         try {
             const { text } = await generateText({
-                model: openai("gpt-4o"),
+                model: openai("llama3.1: 8b"),
                 prompt: `Suggest an optimal appointment time on ${date.toDateString()} based on the current appointments: ${JSON.stringify(appointments)}. Consider factors like peak hours and available slots.`,
             })
             setAiSuggestion(text)
