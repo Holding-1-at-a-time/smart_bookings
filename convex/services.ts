@@ -223,7 +223,7 @@ export const createAvailability = mutation({
     },
     handler: async (ctx, args) => {
         const user = await ctx.auth.getUserIdentity()
-        if (!user) throw new Error("Unauthorized")
+        if (!user) {
 
         return await ctx.db.insert("availability", args)
     },
