@@ -134,7 +134,11 @@ export const createBooking = mutation({
         })
 
         // Send booking confirmation
-        await ctx.runMutation(api.notifications.sendBookingConfirmation, { bookingId: newBooking })
+        try {
+          await ctx.runMutation(api.notifications.sendBookingConfirmation, { bookingId: newBooking })
+        } catch (error) {
+          console.error("Failed to send booking confirmation", error)
+        }
 
         return newBooking
     },
