@@ -18,13 +18,11 @@ import { api } from "./_generated/api"
 export const getBookingsByDate = query({
     args: { organizationId: v.id("organizations"), date: v.string() },
     handler: async (ctx, args) => {
-        const bookings = await ctx.db
-            .query("bookings")
-            .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-            .filter((q) => q.eq(q.field("date"), args.date))
-            .collect()
-        return bookings
-    },
+        return await ctx.db
+                    .query("bookings")
+                    .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
+                    .filter((q) => q.eq(q.field("date"), args.date))
+                    .collect();
 })
 
 export const getAvailableTimeSlots = query({
@@ -53,7 +51,7 @@ export const getAvailableTimeSlots = query({
 
         const businessHours = organization.businessHours
         const bookingDay = new Date(date).getDay()
-        const dayHours = businessHours.find((hours) => hours.dayOfWeek === bookingDay)
+        const {businessHours} = organization
 
         if (!dayHours) {
             return [] // No available slots on this day
