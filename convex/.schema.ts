@@ -193,5 +193,19 @@ export default defineSchema({
     .index("by_reward", ["reward"])
     .index("by_next_state", ["nextState"])
     .index("by_created_at", ["createdAt"]),
-})
 
+
+  pricingRequests: defineTable({
+    tier: v.string(),
+    price: v.string(),
+    businessName: v.string(),
+    name: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    locations: v.string(),
+    employees: v.string(),
+    currentSoftware: v.string(),
+    monthlyBookings: v.string(),
+    createdAt: v.string(),
+  }),
+}),

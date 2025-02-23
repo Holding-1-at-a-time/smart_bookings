@@ -20,6 +20,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from '@clerk/themes'
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
+import Header from "@/components/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider dynamic
+    <ClerkProvider
       appearance={{
         baseTheme: [dark],
         variables: {
@@ -60,10 +61,8 @@ export default function RootLayout({
       }}
     >
       <html lang="en">
-        <header />
-        <title>Auto Detailing Scheduling System</title>
-        <body className={cn(`${geistSans.variable} ${geistMono.variable} antialiased`, 'bg-gray-100 text-white min-h-screen')}
-        >
+        <body className={cn(`${geistSans.variable} ${geistMono.variable} antialiased`, 'bg-gray-100 text-white min-h-screen')}>
+          <Header /> {/* Header component placed inside the body */}
           <ConvexClientProvider>{children}</ConvexClientProvider>
           <Toaster />
           <Analytics />
@@ -71,7 +70,6 @@ export default function RootLayout({
           <footer />
         </body>
       </html>
-    </ClerkProvider >
-
+    </ClerkProvider>
   );
 }

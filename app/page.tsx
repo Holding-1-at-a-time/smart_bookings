@@ -2,22 +2,45 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 22/02/2025 - 23:38:26
+    * @created          : 23/02/2025 - 04:03:11
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 22/02/2025
+    * - Date            : 23/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
 // app/page.tsx
+import { Pricing, Testimonials, FAQ, NewsletterSignup } from '@/components/pricing/Pricing';
 import { Waitlist } from '@clerk/nextjs';
+import { Metadata } from 'next';
 import Image from 'next/image';
-import { Pricing } from '../components/Pricing';
-import { FAQ } from '../components/FAQ';
-import { Testimonials } from '../components/Testimonials';
-import { NewsletterSignup } from '../components/NewsletterSignup';
 
+export const metadata: Metadata = {
+    title: "Smart Bookings - AI-Powered Auto Detailing Business Management",
+    description:
+        "Revolutionize your auto detailing business with Smart Bookings. Our AI-powered platform optimizes scheduling, increases efficiency, and boosts revenue.",
+    openGraph: {
+        title: "Smart Bookings - AI-Powered Auto Detailing Business Management",
+        description:
+            "Revolutionize your auto detailing business with Smart Bookings. Our AI-powered platform optimizes scheduling, increases efficiency, and boosts revenue.",
+        images: [
+            {
+                url: "https://yourdomain.com/og-image.jpg",
+                width: 1200,
+                height: 630,
+                alt: "Smart Bookings Dashboard",
+            },
+        ],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Smart Bookings - AI-Powered Auto Detailing Business Management",
+        description:
+            "Revolutionize your auto detailing business with Smart Bookings. Our AI-powered platform optimizes scheduling, increases efficiency, and boosts revenue.",
+        images: ["https://yourdomain.com/twitter-image.jpg"],
+    },
+}
 export default function Home() {
     return (
         <div className="min-h-screen bg-gray-900 text-white overflow-hidden">
@@ -61,10 +84,11 @@ export default function Home() {
                         <div className="relative mx-auto w-full rounded-lg shadow-glow lg:max-w-md">
                             <Image
                                 className="w-full rounded-lg"
-                                src="/auto-detailing.jpg"
+                                src="https://images.unsplash.com/photo-1601362840469-51e4d8d58785?auto=format&fit=crop&w=1200&q=80"
                                 alt="Auto detailing"
                                 width={640}
                                 height={360}
+                                priority
                             />
                         </div>
                     </div>
