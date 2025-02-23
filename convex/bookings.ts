@@ -120,7 +120,18 @@ export const createBooking = mutation({
             throw new Error("Booking conflict: The selected time slot is not available")
         }
 
+        // Check service provider availability
+        const serviceProvider = await ctx.db.get(service.providerId)
+        if (!serviceProvider) {
+            throw new Error("Service provider not found")
+        }
+
+        if (!isProviderAvailable(serviceProvider, date, startTime, bookingEndTime)) {
+            throw new Error("Service provider is not available at the selected time")
+        }
+
         // Create the booking
+        const newBooking = await ctx.db.insert("bookings", {
         const newBooking = await ctx.db.insert("bookings", {
             organizationId,
             serviceId,

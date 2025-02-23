@@ -57,7 +57,7 @@ export const listOrganizationData = query({
             .order("desc");
 
         if (args.cursor) {
-            query.filter(q => q.gt(q.field("_id"), args.organizationId));
+            query.filter(q => q.gt(q.field("_id"), organizationId));
         }
 
         const data = await query.take(count);
@@ -124,38 +124,43 @@ export const deleteOrganizationData = mutation({
     },
 })
 
+
 export const getOrganizationData = query({
     args: {
-        Id: v.id("organizations"),
-        name: v.string(),
-        email: v.string(),
-        address: v.string(),
-        phone: v.string(),
-        website: v.string(),
-        slug: v.string(),
+        id: v.id("organizations"),
+    },
+    handler: async (ctx, args) => {
+        const organization = await ctx.db.get(args.id)
+        if (!organization) {
+            throw new Error("Organization not found")
+        }
+        return organization
+    },
+})
+
+export const updateOrganizationData = mutation({
+    args: {
+        id: v.id("organizations"),
+        name: v.optional(v.string()),
+        email: v.optional(v.string()),
+        address: v.optional(v.string()),
+        phone: v.optional(v.string()),
+        website: v.optional(v.string()),
+        slug: v.optional(v.string()),
         logo: v.optional(v.string()),
     },
-    returns: v.any(), // Or a more specific type if known F
     handler: async (ctx, args) => {
-        const { Id, name, email, address, phone, website, slug, logo } = args;
-
-        const existingOrganization = await ctx.db.get(Id);
-
+        const { id, ...updates } = args
+        const existingOrganization = await ctx.db.get(id)
         if (!existingOrganization) {
-            throw new Error("Organization not found");
+            throw new Error("Organization not found")
         }
 
         const updatedOrganization = {
             ...existingOrganization,
-            name,
-            email,
-            address,
-            phone,
-            website,
-            slug,
-            logo,
-        };
+            ...updates,
+        }
 
-        return await ctx.db.patch("organizations", updatedOrganization);
+        return await ctx.db.patch(id, updatedOrganization)
     },
 })
