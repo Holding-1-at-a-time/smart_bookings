@@ -190,7 +190,7 @@ export const deletePricingRule = mutation({
         if (!user) throw new Error("Unauthorized")
 
         const rule = await ctx.db.get(args.id)
-        if (!rule) throw new Error("Pricing rule not found")
+        if (!rule) {
 
         await ctx.db.delete(args.id)
     },
