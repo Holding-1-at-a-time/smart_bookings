@@ -245,7 +245,7 @@ export const updateAvailability = mutation({
         if (!user) throw new Error("Unauthorized")
 
         const availability = await ctx.db.get(id)
-        if (!availability) throw new Error("Availability not found")
+        if (!availability) {
 
         return await ctx.db.patch(id, updates)
     },
