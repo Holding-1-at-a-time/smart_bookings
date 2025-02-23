@@ -45,8 +45,6 @@ export const updateProviderAvailability = mutation({
             await ctx.db.insert("availability", {
                 providerId,
                 organizationId,
-                ...slot,
-                serviceId: slot.serviceId,
             })
         }
 
@@ -128,16 +126,30 @@ export const checkAvailability = action({
       Start Time: ${startTime}
       Duration: ${duration} minutes
 
-      Use the RL model to inform your decision. Respond with either "Available" or "Not Available" followed by a brief explanation and a confidence score between 0 and 1.
-    `;
-
+      Provide a JSON object with the following properties:
+      - isAvailable: boolean
+      - explanation: string
+      - confidenceScore: number
+      `;
         const { text } = await generateText({
             model: groq("gemma2-9b-it"),
-            prompt,
+            prompt: prompt,
         });
 
-        const [availabilityResult, explanation, confidenceScore] = text.split("\n");
-        const isAvailable = availabilityResult.toLowerCase().trim() === "available";
+        // Split the generated text by newlines, trim empty parts, and validate format
+        const parts = text.split("\n").map(part => part.trim()).filter(Boolean);
+        if (parts.length < 3) {
+            throw new Error(`Unexpected response format from RL model. Expected at least 3 parts but got ${parts.length}. Response: ${text}`);
+        }
+
+        const [availabilityResult, explanation, confidenceScoreStr] = parts;
+        const confidence = parseFloat(confidenceScoreStr);
+        if (isNaN(confidence) || confidence < 0 || confidence > 1) {
+            throw new Error(`Invalid confidence score received from RL model: "${confidenceScoreStr}".`);
+        }
+
+        const isAvailable = availabilityResult.toLowerCase() === "available";
+
 
         return {
             isAvailable,
