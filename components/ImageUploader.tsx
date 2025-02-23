@@ -34,6 +34,24 @@ export default function ImageUploader({ currentImage, onUpload, organizationId }
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0]
         if (!file) return
+    
+        if (!file.type.startsWith('image/')) {
+            toast({
+                title: "Invalid file type",
+                description: "Please upload an image file",
+                variant: "destructive"
+            })
+            return
+        }
+    
+        if (file.size > 5 * 1024 * 1024) {
+            toast({
+                title: "File too large",
+                description: "Image must be less than 5MB",
+                variant: "destructive"
+            })
+            return
+        }
 
         setIsUploading(true)
 
