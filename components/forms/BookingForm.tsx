@@ -45,14 +45,18 @@ export default function BookingForm({ organizationId, services }: BookingFormPro
 
     const availableTimeSlots = useQuery(
         api.bookings.getAvailableTimeSlots,
-        selectedDate && selectedService
-            ? {
-                organizationId,
-                serviceId: selectedService,
-                date: selectedDate.toISOString().split("T")[0],
+        () => {
+            if (selectedDate && selectedService) {
+                return {
+                    organizationId,
+                    serviceId: selectedService,
+                    date: selectedDate.toISOString().split("T")[0],
+                };
+            } else {
+                return "skip"; // Or return undefined if "skip" is not supported
             }
-            : "skip",
-    )
+        }
+    );
 
     useEffect(() => {
         if (availableTimeSlots && availableTimeSlots.length > 0) {

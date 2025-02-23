@@ -11,12 +11,15 @@
     * - Modification    : 
 **/
 import type { Metadata } from "next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from '@clerk/themes'
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,6 +65,9 @@ export default function RootLayout({
         <body className={cn(`${geistSans.variable} ${geistMono.variable} antialiased`, 'bg-gray-100 text-white min-h-screen')}
         >
           <ConvexClientProvider>{children}</ConvexClientProvider>
+          <Toaster />
+          <Analytics />
+          <SpeedInsights />
           <footer />
         </body>
       </html>
