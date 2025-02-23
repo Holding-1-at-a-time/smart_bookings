@@ -26,21 +26,52 @@ const AvailabilityManager = () => {
     const [availability, setAvailability] = useState<string | null>(null)
 
     const handleUpdateAvailability = async () => {
-        if (startTime >= endTime) {
-            toast({
-                title: "Invalid time range",
-                description: "End time must be after start time",
-                variant: "destructive",
-            })
-            return
-        }
+        try {
+            const { startTime, endTime } = await AvailabilityManager.getAvailability();
+            setStartTime(startTime);
+            setEndTime(endTime);
 
-        setAvailability(`Available from ${startTime} to ${endTime}`)
-        toast({
-            title: "Availability Updated",
-            description: `Availability set from ${startTime} to ${endTime}`,
-        })
-    }
+            const [startHour, startMinute] = startTime.split(":").map(Number);
+            const [endHour, endMinute] = endTime.split(":").map(Number);
+            const startDate = new Date("1970-01-01");
+            startDate.setHours(startHour, startMinute);
+            const endDate = new Date("1970-01-01");
+            endDate.setHours(endHour, endMinute);
+
+            if (startDate.getTime() >= endDate.getTime()) {
+                toast({
+                    title: "Invalid time range",
+                    description: "End time must be after start time",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            setAvailability(`Available from ${startTime} to ${endTime}`);
+            toast({
+                title: "Availability Updated",
+                description: `Availability set from ${startTime} to ${endTime}`,
+            });
+
+        } catch (error) {
+            console.error(error);
+            if (error instanceof Error) {
+                console.error("Error fetching availability");
+            }
+            toast({
+                title: "Error fetching availability",
+                description: "Failed to fetch availability",
+                variant: "destructive",
+            }
+            )
+
+            setAvailability(`Available from ${startTime} to ${endTime}`)
+            toast({
+                title: "Availability Updated",
+                description: `Availability set from ${startTime} to ${endTime}`,
+            });
+        }
+    };
 
     return (
         <Card className="w-[380px]">
@@ -75,8 +106,7 @@ const AvailabilityManager = () => {
                 <Button onClick={handleUpdateAvailability}>Update Availability</Button>
             </CardFooter>
         </Card>
-    )
-}
+    );
+};
 
-export default AvailabilityManager
-
+export default AvailabilityManager;

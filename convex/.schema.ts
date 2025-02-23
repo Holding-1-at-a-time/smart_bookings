@@ -208,4 +208,4 @@ export default defineSchema({
     monthlyBookings: v.string(),
     createdAt: v.string(),
   }),
-}),
+})

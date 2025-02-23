@@ -112,7 +112,7 @@ export function Testimonials() {
         <div className="grid gap-8 grid-cols-1 md:grid-cols-3">
             {testimonials.map((testimonial, index) => (
                 <div key={index} className="bg-gray-800 shadow-glow rounded-lg p-6">
-                    <p className="text-gray-300 mb-4">"{testimonial.content}"</p>
+                    <p className="text-gray-300 mb-4">&quot;{testimonial.content}&quot;</p>
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
                             <svg className="h-10 w-10 text-[#00AE98]" fill="currentColor" viewBox="0 0 24 24">

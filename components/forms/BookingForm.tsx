@@ -19,8 +19,10 @@ import type { Id } from "@/convex/_generated/dataModel"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/components/ui/use-toast"
 import { Calendar } from "@/components/ui/calendar"
+import { v } from "convex/values"
+import { mutation } from "@/convex/_generated/server"
+import { useToast } from "@/hooks/use-toast"
 
 interface BookingFormProps {
     organizationId: Id<"organizations">
@@ -31,17 +33,35 @@ interface BookingFormProps {
         price: number
     }[]
 }
+export const createBooking = mutation({
+    args: {
+        organizationId: v.id("organizations"),
+        serviceId: v.id("services"),
+        startTime: v.string(),
+        date: v.string(),
+        staffId: v.id("staff"),
+        customerId: v.id("customers"),
+        customerName: v.string(),
+        customerEmail: v.string(),
+        customerPhone: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        return await ctx.db.insert("bookings", args);
+    },
+});
 
 export default function BookingForm({ organizationId, services }: BookingFormProps) {
-    const { toast } = useToast()
-    const createBooking = useMutation(api.bookings.createBooking)
+    const { toast } = useToast();
+    const createBooking = useMutation(api.bookings.createBooking);
 
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
-    const [selectedService, setSelectedService] = useState<Id<"services"> | undefined>()
-    const [startTime, setStartTime] = useState<string>("")
-    const [customerName, setCustomerName] = useState<string>("")
-    const [customerEmail, setCustomerEmail] = useState<string>("")
-    const [customerPhone, setCustomerPhone] = useState<string>("")
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    const [selectedService, setSelectedService] = useState<Id<"services"> | undefined>();
+    const [startTime, setStartTime] = useState<string>("");
+    const [customerName, setCustomerName] = useState<string>("");
+    const [customerEmail, setCustomerEmail] = useState<string>("");
+    const [customerPhone, setCustomerPhone] = useState<string>("");
+    const [selectedStaff, setSelectedStaff] = useState<Id<"staff"> | undefined>();
+    const [selectedCustomer, setSelectedCustomer] = useState<Id<"customers"> | undefined>();
 
     const availableTimeSlots = useQuery(
         api.bookings.getAvailableTimeSlots,
@@ -53,27 +73,29 @@ export default function BookingForm({ organizationId, services }: BookingFormPro
                     date: selectedDate.toISOString().split("T")[0],
                 };
             } else {
-                return "skip"; // Or return undefined if "skip" is not supported
+                return undefined;
             }
         }
     );
 
     useEffect(() => {
         if (availableTimeSlots && availableTimeSlots.length > 0) {
-            setStartTime(availableTimeSlots[0])
+            setStartTime(availableTimeSlots[0].startTime);
+            setSelectedStaff(availableTimeSlots[0].staffId);
         } else {
-            setStartTime("")
+            setStartTime("");
+            setSelectedStaff(undefined);
         }
-    }, [availableTimeSlots])
+    }, [availableTimeSlots]);
 
-    const handleCreateBooking = async () => {
-        if (!selectedDate || !selectedService || !startTime || !customerName || !customerEmail) {
+    const handleCreateBooking = async () => { // Move logic inside the handler function
+        if (!selectedDate || !selectedService || !startTime || !customerName || !customerEmail || !selectedStaff || !selectedCustomer) {
             toast({
                 title: "Error",
                 description: "Please fill in all required fields.",
                 variant: "destructive",
-            })
-            return
+            });
+            return;
         }
 
         try {
@@ -82,32 +104,38 @@ export default function BookingForm({ organizationId, services }: BookingFormPro
                 serviceId: selectedService,
                 date: selectedDate.toISOString().split("T")[0],
                 startTime,
+                staffId: selectedStaff,
+                customerId: selectedCustomer,
                 customerName,
                 customerEmail,
                 customerPhone,
-            })
+            });
+
             toast({
                 title: "Booking created",
                 description: "The booking has been created successfully.",
-            })
+            });
             // Reset form
-            setSelectedDate(new Date())
-            setSelectedService(undefined)
-            setStartTime("")
-            setCustomerName("")
-            setCustomerEmail("")
-            setCustomerPhone("")
+            setSelectedDate(new Date());
+            setSelectedService(undefined);
+            setStartTime("");
+            setSelectedStaff(undefined);
+            setSelectedCustomer(undefined);
+            setCustomerName("");
+            setCustomerEmail("");
+            setCustomerPhone("");
         } catch (error) {
+            console.error(error);
             toast({
                 title: "Error",
                 description: "Failed to create booking. Please try again.",
                 variant: "destructive",
-            })
+            });
         }
-    }
+    };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4" >
             <h2 className="text-2xl font-bold">Create Booking</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -126,14 +154,15 @@ export default function BookingForm({ organizationId, services }: BookingFormPro
                             ))}
                         </SelectContent>
                     </Select>
+
                     <Select onValueChange={setStartTime} value={startTime}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select time" />
                         </SelectTrigger>
                         <SelectContent>
                             {availableTimeSlots?.map((slot) => (
-                                <SelectItem key={slot} value={slot}>
-                                    {slot}
+                                <SelectItem key={slot.startTime} value={slot.startTime}>
+                                    {slot.startTime}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -159,6 +188,6 @@ export default function BookingForm({ organizationId, services }: BookingFormPro
                     <Button onClick={handleCreateBooking}>Create Booking</Button>
                 </div>
             </div>
-        </div>
-    )
+        </div >
+    ) // Added closing parenthesis for the component
 }
