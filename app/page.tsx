@@ -2,204 +2,231 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 20/02/2025 - 07:34:14
+    * @created          : 23/02/2025 - 04:03:11
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 20/02/2025
+    * - Date            : 23/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
-"use client";
+// app/page.tsx
+import { Pricing, Testimonials, FAQ, NewsletterSignup } from '@/components/pricing/Pricing';
+import { Waitlist } from '@clerk/nextjs';
+import { Metadata } from 'next';
+import Image from 'next/image';
 
-import {
-  Authenticated,
-  Unauthenticated,
-  useMutation,
-  useQuery,
-} from "convex/react";
-import { api } from "../convex/_generated/api";
-import Link from "next/link";
-import { SignedIn, SignedOut, SignUpButton } from "@clerk/nextjs";
-import { SignInButton } from "@clerk/nextjs";
-import { UserButton } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-
+export const metadata: Metadata = {
+    title: "Smart Bookings - AI-Powered Auto Detailing Business Management",
+    description:
+        "Revolutionize your auto detailing business with Smart Bookings. Our AI-powered platform optimizes scheduling, increases efficiency, and boosts revenue.",
+    openGraph: {
+        title: "Smart Bookings - AI-Powered Auto Detailing Business Management",
+        description:
+            "Revolutionize your auto detailing business with Smart Bookings. Our AI-powered platform optimizes scheduling, increases efficiency, and boosts revenue.",
+        images: [
+            {
+                url: "https://yourdomain.com/og-image.jpg",
+                width: 1200,
+                height: 630,
+                alt: "Smart Bookings Dashboard",
+            },
+        ],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Smart Bookings - AI-Powered Auto Detailing Business Management",
+        description:
+            "Revolutionize your auto detailing business with Smart Bookings. Our AI-powered platform optimizes scheduling, increases efficiency, and boosts revenue.",
+        images: ["https://yourdomain.com/twitter-image.jpg"],
+    },
+}
 export default function Home() {
-  return (
-    <>
-      <header className="sticky top-0 z-10 bg-background p-4 border-b-2 border-slate-200 dark:border-slate-800 flex flex-row justify-between items-center">
-        <h1 className="text-4xl font-bold mb-8">Welcome to Smart Booking&apos;s</h1>
-        <UserButton
-          appearance={{
-            layout: {
-              shimmer: true,
-              animations: true,
-            },
-            variables: {
-              colorPrimary: "#00AE98",
-              colorTextSecondary: "#707070",
-            },
-          }}
-        />
-        <SignedIn>
-          <Link href="/dashboard">
-            <Button>Go to Dashboard</Button>
-          </Link>
-        </SignedIn>
-        <SignedOut>
-          <div className="space-x-4">
-            <Link href="/sign-in">
-              <Button>Sign In</Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button variant="outline">Sign Up</Button>
-            </Link>
-          </div>
-        </SignedOut>
-      </header>
-      <main className="p-8 flex flex-col gap-8">
-        <h1 className="text-4xl font-bold text-center">
-          Convex + Next.js + Clerk
-        </h1>
-        <Authenticated>
-          <Content />
-        </Authenticated>
-        <Unauthenticated>
-          <SignInForm />
-        </Unauthenticated>
-      </main>
-    </>
-  );
-}
-
-function SignInForm() {
-  return (
-    <div className="flex flex-col gap-8 w-96 mx-auto">
-      <p>Log in to see the numbers</p>
-      <SignInButton mode="modal">
-        <button className="bg-foreground text-background px-4 py-2 rounded-md">
-          Sign in
-        </button>
-      </SignInButton>
-      <SignUpButton mode="modal">
-        <button className="bg-foreground text-background px-4 py-2 rounded-md">
-          Sign up
-        </button>
-      </SignUpButton>
-    </div>
-  );
-}
-
-function Content() {
-  const { viewer, numbers } =
-    useQuery(api.myFunctions.listNumbers, {
-      count: 10,
-    }) ?? {};
-  const addNumber = useMutation(api.myFunctions.addNumber);
-
-  if (viewer === undefined || numbers === undefined) {
     return (
-      <div className="mx-auto">
-        <p>loading... (consider a loading skeleton)</p>
-      </div>
-    );
-  }
+        <div className="min-h-screen bg-gray-900 text-white overflow-hidden">
+            <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-[#00AE98] opacity-20 blur-3xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-transparent"></div>
+            </div>
 
-  return (
-    <div className="flex flex-col gap-8 max-w-lg mx-auto">
-      <p>Welcome {viewer ?? "Anonymous"}!</p>
-      <p>
-        Click the button below and open this page in another window - this data
-        is persisted in the Convex cloud database!
-      </p>
-      <p>
-        <button
-          className="bg-foreground text-background text-sm px-4 py-2 rounded-md"
-          onClick={() => {
-            void addNumber({ value: Math.floor(Math.random() * 10) });
-          }}
-        >
-          Add a random number
-        </button>
-      </p>
-      <p>
-        Numbers:{" "}
-        {numbers?.length === 0
-          ? "Click the button!"
-          : (numbers?.join(", ") ?? "...")}
-      </p>
-      <p>
-        Edit{" "}
-        <code className="text-sm font-bold font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded-md">
-          convex/myFunctions.ts
-        </code>{" "}
-        to change your backend
-      </p>
-      <p>
-        Edit{" "}
-        <code className="text-sm font-bold font-mono bg-slate-200 dark:bg-slate-800 px-1 py-0.5 rounded-md">
-          app/page.tsx
-        </code>{" "}
-        to change your frontend
-      </p>
-      <p>
-        See the{" "}
-        <Link href="/server" className="underline hover:no-underline">
-          /server route
-        </Link>{" "}
-        for an example of loading data in a server component
-      </p>
-      <div className="flex flex-col">
-        <p className="text-lg font-bold">Useful resources:</p>
-        <div className="flex gap-2">
-          <div className="flex flex-col gap-2 w-1/2">
-            <ResourceCard
-              title="Convex docs"
-              description="Read comprehensive documentation for all Convex features."
-              href="https://docs.convex.dev/home"
-            />
-            <ResourceCard
-              title="Stack articles"
-              description="Learn about best practices, use cases, and more from a growing
-            collection of articles, videos, and walkthroughs."
-              href="https://www.typescriptlang.org/docs/handbook/2/basic-types.html"
-            />
-          </div>
-          <div className="flex flex-col gap-2 w-1/2">
-            <ResourceCard
-              title="Templates"
-              description="Browse our collection of templates to get started quickly."
-              href="https://www.convex.dev/templates"
-            />
-            <ResourceCard
-              title="Discord"
-              description="Join our developer community to ask questions, trade tips & tricks,
-            and show off your projects."
-              href="https://www.convex.dev/community"
-            />
-          </div>
+            <header className="relative z-10">
+                <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                            <Image src="/logo.svg" alt="Smart Bookings Logo" width={40} height={40} className="filter drop-shadow-glow" />
+                            <span className="ml-2 text-xl font-bold">Smart Bookings</span>
+                        </div>
+                        <div className="hidden md:flex space-x-4">
+                            <a href="#features" className="text-gray-300 hover:text-white transition">Features</a>
+                            <a href="#pricing" className="text-gray-300 hover:text-white transition">Pricing</a>
+                            <a href="#testimonials" className="text-gray-300 hover:text-white transition">Testimonials</a>
+                            <a href="#faq" className="text-gray-300 hover:text-white transition">FAQ</a>
+                        </div>
+                    </div>
+                </nav>
+            </header>
+
+            <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+                    <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
+                        <h1 className="text-4xl tracking-tight font-extrabold sm:text-5xl md:text-6xl">
+                            <span className="block">Revolutionize Your</span>
+                            <span className="block text-[#00AE98] filter drop-shadow-glow">Auto Detailing Business</span>
+                        </h1>
+                        <p className="mt-3 text-base text-gray-300 sm:mt-5 sm:text-xl lg:text-lg xl:text-xl">
+                            Smart Bookings uses AI to optimize your schedule, increase efficiency, and boost your revenue. Join the waitlist for early access!
+                        </p>
+                        <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
+                            <Waitlist />
+                        </div>
+                    </div>
+                    <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
+                        <div className="relative mx-auto w-full rounded-lg shadow-glow lg:max-w-md">
+                            <Image
+                                className="w-full rounded-lg"
+                                src="https://images.unsplash.com/photo-1601362840469-51e4d8d58785?auto=format&fit=crop&w=1200&q=80"
+                                alt="Auto detailing"
+                                width={640}
+                                height={360}
+                                priority
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <section id="features" className="mt-24">
+                    <h2 className="text-3xl font-extrabold sm:text-4xl">
+                        Why Choose Smart Bookings?
+                    </h2>
+                    <div className="mt-12 grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        {features.map((feature) => (
+                            <div key={feature.name} className="bg-gray-800 shadow-glow rounded-lg p-6 transform transition duration-500 hover:scale-105">
+                                <div className="text-[#00AE98] text-3xl mb-4 filter drop-shadow-glow">{feature.icon}</div>
+                                <h3 className="text-xl font-medium">{feature.name}</h3>
+                                <p className="mt-2 text-base text-gray-300">{feature.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                <section id="product-details" className="mt-24">
+                    <h2 className="text-3xl font-extrabold sm:text-4xl mb-8">
+                        Detailed Product Information
+                    </h2>
+                    <div className="grid gap-8 grid-cols-1 md:grid-cols-2">
+                        <div className="bg-gray-800 shadow-glow rounded-lg p-6">
+                            <h3 className="text-2xl font-bold mb-4">AI-Powered Scheduling</h3>
+                            <ul className="list-disc list-inside text-gray-300 space-y-2">
+                                <li>Dynamic time slot allocation based on service complexity</li>
+                                <li>Automatic staff assignment optimization</li>
+                                <li>Real-time schedule adjustments for cancellations and no-shows</li>
+                                <li>Predictive booking suggestions for customers</li>
+                            </ul>
+                        </div>
+                        <div className="bg-gray-800 shadow-glow rounded-lg p-6">
+                            <h3 className="text-2xl font-bold mb-4">Customer Management</h3>
+                            <ul className="list-disc list-inside text-gray-300 space-y-2">
+                                <li>Detailed customer profiles with service history</li>
+                                <li>Automated reminders and follow-ups</li>
+                                <li>Loyalty program integration</li>
+                                <li>Personalized service recommendations</li>
+                            </ul>
+                        </div>
+                        <div className="bg-gray-800 shadow-glow rounded-lg p-6">
+                            <h3 className="text-2xl font-bold mb-4">Business Analytics</h3>
+                            <ul className="list-disc list-inside text-gray-300 space-y-2">
+                                <li>Real-time revenue tracking and forecasting</li>
+                                <li>Service popularity and trend analysis</li>
+                                <li>Staff performance metrics</li>
+                                <li>Customer retention and churn prediction</li>
+                            </ul>
+                        </div>
+                        <div className="bg-gray-800 shadow-glow rounded-lg p-6">
+                            <h3 className="text-2xl font-bold mb-4">Multi-Location Support</h3>
+                            <ul className="list-disc list-inside text-gray-300 space-y-2">
+                                <li>Centralized management for multiple locations</li>
+                                <li>Location-specific pricing and services</li>
+                                <li>Cross-location staff scheduling</li>
+                                <li>Aggregated reporting across all locations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="pricing" className="mt-24">
+                    <h2 className="text-3xl font-extrabold sm:text-4xl mb-8">
+                        Pricing Plans
+                    </h2>
+                    <Pricing />
+                </section>
+
+                <section id="testimonials" className="mt-24">
+                    <h2 className="text-3xl font-extrabold sm:text-4xl mb-8">
+                        What Our Customers Say
+                    </h2>
+                    <Testimonials />
+                </section>
+
+                <section id="faq" className="mt-24">
+                    <h2 className="text-3xl font-extrabold sm:text-4xl mb-8">
+                        Frequently Asked Questions
+                    </h2>
+                    <FAQ />
+                </section>
+
+                <section id="newsletter" className="mt-24">
+                    <h2 className="text-3xl font-extrabold sm:text-4xl mb-8">
+                        Stay Updated
+                    </h2>
+                    <NewsletterSignup />
+                </section>
+            </main>
+
+            <footer className="relative z-10 bg-gray-800 mt-24">
+                <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
+                    <div className="flex justify-center space-x-6 md:order-2">
+                        {/* Add your social media links here */}
+                    </div>
+                    <div className="mt-8 md:mt-0 md:order-1">
+                        <p className="text-center text-base text-gray-400">
+                            &copy; 2025 Smart Bookings. All rights reserved.
+                        </p>
+                    </div>
+                </div>
+            </footer>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
-function ResourceCard({
-  title,
-  description,
-  href,
-}: {
-  title: string;
-  description: string;
-  href: string;
-}) {
-  return (
-    <div className="flex flex-col gap-2 bg-slate-200 dark:bg-slate-800 p-4 rounded-md h-28 overflow-auto">
-      <a href={href} className="text-sm underline hover:no-underline">
-        {title}
-      </a>
-      <p className="text-xs">{description}</p>
-    </div>
-  );
-}
+const features = [
+    {
+        name: 'AI-Powered Scheduling',
+        description: 'Our advanced AI optimizes your schedule to maximize efficiency and revenue.',
+        icon: '🧠',
+    },
+    {
+        name: 'Multi-Location Support',
+        description: 'Manage multiple detailing locations from a single, intuitive dashboard.',
+        icon: '📍',
+    },
+    {
+        name: 'Customer Insights',
+        description: 'Gain valuable insights into customer preferences and booking patterns.',
+        icon: '📊',
+    },
+    {
+        name: 'Automated Marketing',
+        description: 'Send targeted promotions and reminders to boost repeat business.',
+        icon: '📱',
+    },
+    {
+        name: 'Real-time Analytics',
+        description: 'Track your business performance with detailed, real-time reports.',
+        icon: '📈',
+    },
+    {
+        name: 'Integration Ready',
+        description: 'Easily connect with your favorite tools and payment processors.',
+        icon: '🔗',
+    },
+];

@@ -1,3 +1,15 @@
+/**
+    * @description      : 
+    * @author           : rrome
+    * @group            : 
+    * @created          : 23/02/2025 - 00:14:18
+    * 
+    * MODIFICATION LOG
+    * - Version         : 1.0.0
+    * - Date            : 23/02/2025
+    * - Author          : rrome
+    * - Modification    : 
+**/
 import type { Config } from "tailwindcss";
 
 export default {
@@ -10,6 +22,7 @@ export default {
   theme: {
   	extend: {
   		colors: {
+			primary: "#00AE98",
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

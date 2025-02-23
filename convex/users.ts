@@ -11,11 +11,10 @@
  * - Modification    : 
  **/
 
-import { Mutation } from "./_generated/server";
-import { query } from "./_generated/server";
-import { internalMutation } from "./_generated/server";
-import { GenericId } from "./_generated/server";
 import { v } from "convex/values";
+import { mutation, Mutation } from "./_generated/server";
+import { query } from "./_generated/server";
+
 
 /**
  * Public mutation to create or update a user.
@@ -30,87 +29,47 @@ export const createOrUpdateUser = mutation({
         role: v.string(),
         updatedAt: v.string(),
     },
-    handler: async(ctx, args: CreateOrUpdateUser Args): Promise<CreateOrUpdateUser Result> => {
-    try {
-        const existingUser = await ctx.db
-            .query("users")
-            .withIndex("by_clerk_id", q => q.eq("clerkId", args.clerkId))
-            .unique();
+    handler: async (ctx, args: CreateOrUpdateUserArgs): Promise<CreateOrUpdateUserResult> => {
+        try {
+            const existingUser = await ctx.db
+                .query("users")
+                .withIndex("by_clerk_id", q => q.eq("clerkId", args.clerkId))
+                .unique();
 
-        if (existingUser) {
-            const updatedUser = await ctx.db.patch(existingUser._id, {
+            if (existingUser) {
+                const updatedUser = await ctx.db.patch(existingUser._id, {
+                    metadata: args.metadata,
+                    organizationId: args.organizationId,
+                    name: args.name,
+                    email: args.email,
+                    role: args.role,
+                    updatedAt: new Date().toISOString(),
+
+                });
+                return { user: updatedUser };
+            }
+
+            const newUser = await ctx.db.insert("users", {
+                clerkId: args.clerkId,
                 metadata: args.metadata,
                 organizationId: args.organizationId,
                 name: args.name,
                 email: args.email,
                 role: args.role,
-                updatedAt: new Date().toISOString(),
-
+                updatedAt: args.updatedAt,
+                userSessions: [],
+                sessions: []
             });
-            return { user: updatedUser };
+            return { user: newUser };
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(error.message);
+            } else {
+                throw new Error("An unknown error occurred.");
+            }
         }
-
-        const newUser = await ctx.db.insert("users", {
-            clerkId: args.clerkId,
-            metadata: args.metadata,
-            organizationId: args.organizationId,
-            name: args.name,
-            email: args.email,
-            role: args.role,
-            updatedAt: args.updatedAt,
-        });
-        return { user: newUser };
-    } catch (error) {
-        if (error instanceof Error) {
-            throw error(error.message);
-        }
-        throw error("Failed to create or update user");
     }
-},
 });
-/**
- * Query to search users by name or email, optionally filtered by organization.
- */
-export const searchUsers = query({
-    args: {
-        searchTerm: v.string(),
-        organizationId: v.optional(v.id("organizations")),
-        limit: v.optional(v.number()),
-    },
-    returns: v.array(v.type(User)),
-    handler: async (ctx, args) => {
-        const { searchTerm, organizationId, limit } = args;
-
-        if (!searchTerm) {
-            throw new Error("Search term is required");
-        }
-
-        let userQuery = ctx.db.query("users").withIndex("search_name_email", q => q.eq("name", searchTerm).or(q.eq("email", searchTerm)));
-
-        if (organizationId) {
-            userQuery = userQuery.filter(q => q.eq("organizationId", organizationId));
-        }
-
-        if (limit) {
-            userQuery = userQuery.take(limit);
-        }
-
-        return await userQuery.collect();
-    },
-});
-
-export const deleteUser = mutation({
-    args: { userId: v.id("users") },
-    handler: async (ctx, args) => {
-        console.log("deleteUser", args)
-        const user = await ctx.db.get(args.userId)
-        if (!user) {
-            throw new Error("User not found")
-        }
-        await ctx.db.delete(args.userId)
-        return true
-    },
-})
 
 export const updateUserRole = mutation({
     args: { userId: v.id("users"), newRole: v.string() },
@@ -193,38 +152,15 @@ export const listUsers = query({
     },
 })
 
-export const searchUsers = query<{
-    searchTerm: string;
-    organizationId?: string;
-    limit?: number;
-}, User[]>({
-    handler: async (ctx, { searchTerm, organizationId, limit }) => {
-        if (!searchTerm) {
-            throw new Error("Search term is required");
-        }
-
-        let userQuery = ctx.db.query("users").withIndex("search_name_email", q => q.eq("name", searchTerm).or(q.eq("email", searchTerm)));
-
-        if (organizationId) {
-            userQuery.filter(q => q.eq("organizationId", organizationId));
-        }
-
-        if (limit) {
-            userQuery.take(limit);
-        }
-        return await userQuery.collect();
-    }
-}
-)
 export const storeUserSession = mutation({
     args: {
         clerkId: v.string(),
         name: v.string(),
         email: v.string(),
-        userName: v.optional(v.string),
+        userName: v.optional(v.string()),
         firstName: v.string(),
         familyName: v.string(),
-        phoneNumber: v.optional(v.string),
+        phoneNumber: v.optional(v.string()),
         emailVerified: v.boolean(),
         hasVerifiedContactInfo: v.boolean(),
         createdAt: v.string(),
@@ -233,12 +169,12 @@ export const storeUserSession = mutation({
         unsafeMetadata: v.any(),
         privateMetadata: v.any(),
         organizationId: v.optional(v.id("organizations")),
-        organizationName: v.optional(v.string),
-        organizationRole: v.optional(v.string),
-        organizationSlug: v.optional(v.string),
-        organizationLogo: v.optional(v.string),
-        hasOrgLogo: v.optional(v.boolean),
-        organizationPermissions: v.optional(v.array(v.string)),
+        organizationName: v.optional(v.string()),
+        organizationRole: v.optional(v.string()),
+        organizationSlug: v.optional(v.string()),
+        organizationLogo: v.optional(v.string()),
+        hasOrgLogo: v.optional(v.boolean()),
+        organizationPermissions: v.optional(v.array(v.string())),
     },
     handler: async (ctx, args) => {
         const { clerkId, name, email, organizationRole, organizationId, ...metadataFields } = args
@@ -248,7 +184,7 @@ export const storeUserSession = mutation({
             name,
             email,
             role: organizationRole || "member",
-            organizationId: organizationId || null,
+            Id: organizationId || null,
             metadata: metadataFields,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),

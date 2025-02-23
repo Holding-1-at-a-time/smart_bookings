@@ -2,107 +2,111 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 21/02/2025 - 07:55:43
+    * @created          : 22/02/2025 - 13:35:51
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 21/02/2025
+    * - Date            : 22/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
 "use client"
 
 import { useState } from "react"
-import { useQuery, useMutation } from "convex/react"
-import { api } from "@/convex/_generated/api"
-import type { Id } from "@/convex/_generated/dataModel"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "@/hooks/use-toast"
+import { Label } from "@/components/ui/label"
 
-const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
-interface AvailabilityManagerProps {
-    organizationId: Id<"organizations">
-}
-
-export default function AvailabilityManager({ organizationId }: AvailabilityManagerProps) {
-    const { toast } = useToast()
-    const availability = useQuery(api.availability.getAvailability, { organizationId })
-    const updateAvailability = useMutation(api.availability.updateAvailability)
-
-    const [selectedDay, setSelectedDay] = useState<number>(0)
-    const [startTime, setStartTime] = useState<string>("09:00")
-    const [endTime, setEndTime] = useState<string>("17:00")
+const AvailabilityManager = () => {
+    const [startTime, setStartTime] = useState("")
+    const [endTime, setEndTime] = useState("")
+    const [availability, setAvailability] = useState<string | null>(null)
 
     const handleUpdateAvailability = async () => {
-        if (startTime >= endTime) {
-            toast({
-                title: "Invalid time range",
-                description: "End time must be after start time",
-                variant: "destructive",
-            })
-            return
-        }
         try {
-            await updateAvailability({
-                organizationId,
-                dayOfWeek: selectedDay,
-                startTime,
-                endTime,
-            })
-            toast({
-                title: "Availability updated",
-                description: "The availability has been updated successfully.",
-            })
-        } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to update availability. Please try again.",
-                variant: "destructive",
-            })
-        }
-    }
+            const { startTime, endTime } = await AvailabilityManager.getAvailability();
+            setStartTime(startTime);
+            setEndTime(endTime);
 
-    if (availability === undefined) {
-        return <div>Loading...</div>
-    }
+            const [startHour, startMinute] = startTime.split(":").map(Number);
+            const [endHour, endMinute] = endTime.split(":").map(Number);
+            const startDate = new Date("1970-01-01");
+            startDate.setHours(startHour, startMinute);
+            const endDate = new Date("1970-01-01");
+            endDate.setHours(endHour, endMinute);
+
+            if (startDate.getTime() >= endDate.getTime()) {
+                toast({
+                    title: "Invalid time range",
+                    description: "End time must be after start time",
+                    variant: "destructive",
+                });
+                return;
+            }
+
+            setAvailability(`Available from ${startTime} to ${endTime}`);
+            toast({
+                title: "Availability Updated",
+                description: `Availability set from ${startTime} to ${endTime}`,
+            });
+
+        } catch (error) {
+            console.error(error);
+            if (error instanceof Error) {
+                console.error("Error fetching availability");
+            }
+            toast({
+                title: "Error fetching availability",
+                description: "Failed to fetch availability",
+                variant: "destructive",
+            }
+            )
+
+            setAvailability(`Available from ${startTime} to ${endTime}`)
+            toast({
+                title: "Availability Updated",
+                description: `Availability set from ${startTime} to ${endTime}`,
+            });
+        }
+    };
 
     return (
-        <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Manage Availability</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Select onValueChange={(value) => setSelectedDay(Number.parseInt(value))}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select day" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {daysOfWeek.map((day, index) => (
-                            <SelectItem key={index} value={index.toString()}>
-                                {day}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} placeholder="Start Time" />
-                <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} placeholder="End Time" />
-            </div>
-            <Button onClick={handleUpdateAvailability}>Update Availability</Button>
-            <div className="mt-8">
-                <h3 className="text-xl font-semibold mb-4">Current Availability</h3>
-                <ul className="space-y-2">
-                    {availability.map((slot) => (
-                        <li key={slot._id} className="flex justify-between items-center">
-                            <span>{daysOfWeek[slot.dayOfWeek]}</span>
-                            <span>
-                                {slot.startTime} - {slot.endTime}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        </div>
-    )
-}
+        <Card className="w-[380px]">
+            <CardHeader>
+                <CardTitle>Availability Manager</CardTitle>
+                <CardDescription>Set your availability for appointments.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="grid w-full items-center gap-4">
+                    <div className="flex flex-col space-y-1.5">
+                        <Label htmlFor="startTime">Start Time</Label>
+                        <Input
+                            id="startTime"
+                            placeholder="e.g., 9:00 AM"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex flex-col space-y-1.5">
+                        <Label htmlFor="endTime">End Time</Label>
+                        <Input
+                            id="endTime"
+                            placeholder="e.g., 5:00 PM"
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+                {availability && <p>{availability}</p>}
+                <Button onClick={handleUpdateAvailability}>Update Availability</Button>
+            </CardFooter>
+        </Card>
+    );
+};
 
+export default AvailabilityManager;
