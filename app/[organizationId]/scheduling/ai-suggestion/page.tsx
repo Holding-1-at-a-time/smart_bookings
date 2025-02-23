@@ -30,12 +30,6 @@ interface Service {
     duration: number
 }
 
-interface Appointment {
-    id: string
-    date: string
-    serviceId: string
-}
-
 export default function AIScheduleSuggestion() {
     const { organizationId } = useParams()
     const [selectedService, setSelectedService] = useState<string>("")

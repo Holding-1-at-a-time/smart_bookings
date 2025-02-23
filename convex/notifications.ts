@@ -2,104 +2,91 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 22/02/2025 - 15:19:10
+    * @created          : 23/02/2025 - 17:26:42
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 22/02/2025
+    * - Date            : 23/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
-import { mutation } from "./_generated/server"
 import { v } from "convex/values"
+import { mutation, query } from "./_generated/server"
+import { sendEmail } from "../lib/gmail-api"
 
-// This is a placeholder function. In a real-world scenario, you would integrate with an email service provider.
-async function sendEmail(to: string, subject: string, body: string) {
-    console.log(`Sending email to ${to}`)
-    console.log(`Subject: ${subject}`)
-    console.log(`Body: ${body}`)
-    // Implement actual email sending logic here
-}
-
-export const sendBookingConfirmation = mutation({
-    args: { bookingId: v.id("bookings") },
+export const getSettings = query({
+    args: { organizationId: v.string() },
     handler: async (ctx, args) => {
-        const booking = await ctx.db.get(args.bookingId)
-        if (!booking) {
-            throw new Error("Booking not found")
-        }
+        const settings = await ctx.db
+            .query("notificationSettings")
+            .filter((q) => q.eq(q.field("organizationId"), args.organizationId))
+            .first()
 
-        const customer = await ctx.db.get(booking.customerId)
-        if (!customer) {
-            throw new Error("Customer not found")
-        }
-
-        const organization = await ctx.db.get(booking.organizationId)
-        if (!organization) {
-            throw new Error("Organization not found")
-        }
-
-        const service = await ctx.db.get(booking.serviceId)
-        if (!service) {
-            throw new Error("Service not found")
-        }
-
-        const subject = `Booking Confirmation - ${organization.name}`
-        const body = `
-      Dear ${customer.name},
-
-      Your booking has been confirmed for ${service.name} on ${booking.date} at ${booking.startTime}.
-
-      Thank you for choosing ${organization.name}.
-
-      Best regards,
-      ${organization.name} Team
-    `
-
-        await sendEmail(customer.email, subject, body)
-
-        return true
+        return (
+            settings || {
+                emailNotifications: true,
+                smsNotifications: false,
+                reminderFrequency: "1day",
+            }
+        )
     },
 })
 
-export const sendBookingReminder = mutation({
-    args: { bookingId: v.id("bookings") },
+export const updateSettings = mutation({
+    args: {
+        organizationId: v.string(),
+        emailNotifications: v.optional(v.boolean()),
+        smsNotifications: v.optional(v.boolean()),
+        reminderFrequency: v.optional(v.union(v.literal("1day"), v.literal("2days"), v.literal("1week"))),
+    },
     handler: async (ctx, args) => {
-        const booking = await ctx.db.get(args.bookingId)
-        if (!booking) {
-            throw new Error("Booking not found")
+        const { organizationId, ...settings } = args
+
+        const existingSettings = await ctx.db
+            .query("notificationSettings")
+            .filter((q) => q.eq(q.field("organizationId"), organizationId))
+            .first()
+
+        if (existingSettings) {
+            await ctx.db.patch(existingSettings._id, settings)
+        } else {
+            await ctx.db.insert("notificationSettings", { organizationId, ...settings })
         }
 
-        const customer = await ctx.db.get(booking.customerId)
-        if (!customer) {
-            throw new Error("Customer not found")
+        return { success: true }
+    },
+})
+
+export const sendNotificationEmail = mutation({
+    args: {
+        organizationId: v.string(),
+        to: v.string(),
+        subject: v.string(),
+        templateType: v.union(v.literal("confirmation"), v.literal("reminder")),
+        templateData: v.object({
+            customerName: v.string(),
+            serviceName: v.string(),
+            date: v.string(),
+            time: v.string(),
+            businessName: v.string(),
+            businessAddress: v.string(),
+            businessPhone: v.string(),
+        }),
+    },
+    handler: async (ctx, args) => {
+        const { organizationId, ...emailData } = args
+
+        const settings = await ctx.db
+            .query("notificationSettings")
+            .filter((q) => q.eq(q.field("organizationId"), organizationId))
+            .first()
+
+        if (settings?.emailNotifications) {
+            await sendEmail(emailData)
+            return { success: true }
+        } else {
+            return { success: false, reason: "Email notifications are disabled" }
         }
-
-        const organization = await ctx.db.get(booking.organizationId)
-        if (!organization) {
-            throw new Error("Organization not found")
-        }
-
-        const service = await ctx.db.get(booking.serviceId)
-        if (!service) {
-            throw new Error("Service not found")
-        }
-
-        const subject = `Booking Reminder - ${organization.name}`
-        const body = `
-      Dear ${customer.name},
-
-      This is a reminder for your upcoming booking for ${service.name} on ${booking.date} at ${booking.startTime}.
-
-      We look forward to seeing you soon.
-
-      Best regards,
-      ${organization.name} Team
-    `
-
-        await sendEmail(customer.email, subject, body)
-
-        return true
     },
 })
 

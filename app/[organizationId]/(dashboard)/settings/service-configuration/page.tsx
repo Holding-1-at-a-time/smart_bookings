@@ -64,6 +64,7 @@ export default function ServiceConfiguration() {
                 description: "New service has been successfully added.",
             })
         } catch (error) {
+            console.error(error)
             toast({
                 title: "Error",
                 description: "Failed to add new service. Please try again.",
@@ -85,6 +86,7 @@ export default function ServiceConfiguration() {
                 description: "Service has been successfully updated.",
             })
         } catch (error) {
+            console.error(error)
             toast({
                 title: "Error",
                 description: "Failed to update service. Please try again.",
@@ -102,6 +104,7 @@ export default function ServiceConfiguration() {
                 description: "Service has been successfully deleted.",
             })
         } catch (error) {
+            console.error(error)
             toast({
                 title: "Error",
                 description: "Failed to delete service. Please try again.",
@@ -192,4 +195,3 @@ export default function ServiceConfiguration() {
         </div>
     )
 }
-
