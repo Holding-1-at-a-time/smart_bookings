@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar"
 import { generateText } from "ai"
 import { toast } from "@/hooks/use-toast"
-import { ollama } from 'ollama-ai-provider';
+
 
 
 interface Service {
