@@ -17,12 +17,19 @@ import { api } from "./_generated/api"
 
 export const getBookingsByDate = query({
     args: { organizationId: v.id("organizations"), date: v.string() },
-    handler: async (ctx, args) => {
+    /**
+     * Handler to get staff by organization
+     * @param {object} ctx - The context object
+     * @param {object} args - The arguments object
+     * @param {Id<"organizations">} args.organizationId - The ID of the organization
+     * @returns {Promise<any[]>} - Promise resolving to an array of staff
+     */
+    handler: async (ctx: any, args: { organizationId: Id<"organizations"> }): Promise<any[]> => {
         return await ctx.db
-                    .query("bookings")
+                    .query("staff")
                     .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
-                    .filter((q) => q.eq(q.field("date"), args.date))
                     .collect();
+    },
 })
 
 export const getAvailableTimeSlots = query({
@@ -44,14 +51,14 @@ export const getAvailableTimeSlots = query({
             throw new Error("Service not found")
         }
 
-        const staff = await ctx.db
+        const {businessHours} = organization
             .query("staff")
             .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
             .collect()
 
-        const businessHours = organization.businessHours
-        const bookingDay = new Date(date).getDay()
         const {businessHours} = organization
+        const bookingDay = new Date(date).getDay()
+        const { businessHours } = organization
 
         if (!dayHours) {
             return [] // No available slots on this day
@@ -130,18 +137,24 @@ export const createBooking = mutation({
 
         // Create the booking
         const newBooking = await ctx.db.insert("bookings", {
-        const newBooking = await ctx.db.insert("bookings", {
-            organizationId,
-            serviceId,
-            staffId,
-            customerId,
-            date,
-            startTime,
-            endTime,
-            status: "confirmed",
-            notes: "",
-        })
+            const newBooking = await ctx.db.insert("bookings", {
+                organizationId,
+                serviceId,
+                staffId,
+                customerId,
+                date,
+                startTime,
+                endTime,
+                status: "confirmed",
+                notes: "",
+            })
 
+        // Send booking confirmation
+        try {
+                await ctx.runMutation(api.notifications.sendBookingConfirmation, { bookingId: newBooking })
+            } catch(error) {
+                console.error("Failed to send booking confirmation", error)
+            }
         // Send booking confirmation
         try {
           await ctx.runMutation(api.notifications.sendBookingConfirmation, { bookingId: newBooking })
@@ -150,7 +163,7 @@ export const createBooking = mutation({
         }
 
         return newBooking
-    },
+        },
 })
 
 export const cancelBooking = mutation({

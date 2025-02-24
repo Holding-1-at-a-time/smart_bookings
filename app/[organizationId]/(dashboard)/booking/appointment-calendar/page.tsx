@@ -12,7 +12,8 @@
 **/
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+
 import { useParams, useRouter } from "next/navigation"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
@@ -20,7 +21,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { ollama } from 'ollama-ai-provider';
 
 interface Appointment {
     id: string
@@ -52,20 +53,20 @@ export default function AppointmentCalendar() {
         if (selectedDate) {
             getAISuggestion(selectedDate)
         }
-    }, [selectedDate])
+    }, [selectedDate, getAISuggestion])
 
-    const getAISuggestion = async (date: Date) => {
+    const getAISuggestion = useCallback(async (date: Date) => {
         try {
             const { text } = await generateText({
-                model: openai("gpt-4o"),
+                model: ollama("llama3.1: 8b"),
                 prompt: `Suggest an optimal appointment time on ${date.toDateString()} based on the current appointments: ${JSON.stringify(appointments)}. Consider factors like peak hours and available slots.`,
-            })
-            setAiSuggestion(text)
+            });
+            setAiSuggestion(text);
         } catch (error) {
-            console.error("Error getting AI suggestion:", error)
-            setAiSuggestion("Unable to get AI suggestion at this time.")
+            console.error("Error getting AI suggestion:", error);
+            setAiSuggestion("Unable to get AI suggestion at this time.");
         }
-    }
+    }, [appointments]);
 
     const handleDateSelect = (date: Date | undefined) => {
         setSelectedDate(date)

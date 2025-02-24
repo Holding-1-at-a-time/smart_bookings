@@ -2,7 +2,7 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 13:53:41
+    * @created          : 23/02/2025 - 17:27:49
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
@@ -43,6 +43,7 @@ export default function BookingForm() {
 
     const servicesData = useQuery(api.services.getServices, { organizationId: organizationId as string })
     const createBooking = useMutation(api.bookings.createBooking)
+    const sendNotificationEmail = useMutation(api.notifications.sendNotificationEmail)
 
     useEffect(() => {
         if (servicesData) {
@@ -68,14 +69,31 @@ export default function BookingForm() {
                 customerName,
                 customerEmail,
             })
+
+            // Send confirmation email
+            await sendNotificationEmail({
+                organizationId: organizationId as string,
+                to: customerEmail,
+                subject: "Booking Confirmation",
+                templateType: "confirmation",
+                templateData: {
+                    customerName,
+                    serviceName: services?.find((s) => s.id === selectedService)?.name || "",
+                    date: selectedDate,
+                    time: selectedTime,
+                    businessName: "Auto Detailing AI", // Replace with actual business name
+                    businessAddress: "123 Main St, City, State, ZIP", // Replace with actual address
+                    businessPhone: "(123) 456-7890", // Replace with actual phone number
+                },
+            })
+
             toast({
-                title: "Booking created",
-                description: "Your appointment has been successfully booked.",
+                title: "Booking Confirmed",
+                description: "Your appointment has been successfully booked. Check your email for confirmation.",
             })
             router.push(`/${organizationId}/booking/booking-confirmation/${booking.id}`)
         } catch (error) {
             console.error("Error creating booking:", error)
-
             toast({
                 title: "Error",
                 description: "Failed to create booking. Please try again.",

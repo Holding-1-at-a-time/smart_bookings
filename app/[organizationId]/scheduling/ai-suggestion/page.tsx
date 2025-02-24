@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { ollama } from 'ollama-ai-provider';
 import { toast } from "@/hooks/use-toast"
 
 interface Service {
@@ -29,13 +29,6 @@ interface Service {
     name: string
     duration: number
 }
-
-interface Appointment {
-    id: string
-    date: string
-    serviceId: string
-}
-
 export default function AIScheduleSuggestion() {
     const { organizationId } = useParams()
     const [selectedService, setSelectedService] = useState<string>("")
@@ -60,7 +53,7 @@ export default function AIScheduleSuggestion() {
         try {
             const selectedServiceData = services?.find((s) => s.id === selectedService)
             const { text } = await generateText({
-                model: openai("gpt-4o"),
+                model: ollama("llama3.1: 8b"),
                 prompt: `Given the following appointments: ${JSON.stringify(appointments)}, 
                  and the selected service: ${JSON.stringify(selectedServiceData)}, 
                  suggest the best 3 time slots for scheduling this service in the next 7 days. 
