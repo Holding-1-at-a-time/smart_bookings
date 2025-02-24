@@ -14,89 +14,6 @@
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 
-
-// Services
-export const createService = mutation({
-    args: {
-        organizationId: v.id("organizations"),
-        categoryId: v.optional(v.id("serviceCategories")),
-        name: v.string(),
-        description: v.string(),
-        duration: v.number(),
-        price: v.number(),
-        features: v.array(v.string()),
-        maxBookingsPerDay: v.optional(v.number()),
-        preparationTime: v.optional(v.number()),
-        cleanupTime: v.optional(v.number()),
-    },
-    handler: async (ctx, args) => {
-        const user = await ctx.auth.getUserIdentity()
-        if (!user) {
-          throw new Error("Unauthorized")
-        }
-
-        return await ctx.db.insert("services", {
-            ...args,
-            isActive: true,
-        })
-    },
-})
-
-export const updateService = mutation({
-    args: {
-        id: v.id("services"),
-        categoryId: v.optional(v.id("serviceCategories")),
-        name: v.string(),
-        description: v.string(),
-        duration: v.number(),
-        price: v.number(),
-        isActive: v.boolean(),
-        features: v.array(v.string()),
-        maxBookingsPerDay: v.optional(v.number()),
-        preparationTime: v.optional(v.number()),
-        cleanupTime: v.optional(v.number()),
-        addOns: v.array(
-            v.object({
-                name: v.string(),
-                price: v.number(),
-                duration: v.optional(v.number()),
-            }),
-        ),
-        variations: v.array(
-            v.object({
-                name: v.string(),
-                price: v.number(),
-                duration: v.optional(v.number()),
-            }),
-        ),
-    },
-    handler: async (ctx, args) => {
-        const { id, ...updates } = args
-        const user = await ctx.auth.getUserIdentity()
-        if (!user) throw new Error("Unauthorized")
-
-        const service = await ctx.db.get(id)
-        if (!service) throw new Error("Service not found")
-
-        return await ctx.db.patch(id, updates)
-    },
-})
-
-export const deleteService = mutation({
-    args: {
-        id: v.id("services"),
-    },
-    handler: async (ctx, args) => {
-        const user = await ctx.auth.getUserIdentity()
-        if (!user) throw new Error("Unauthorized")
-
-        const service = await ctx.db.get(args.id)
-        if (!service) throw new Error("Service not found")
-
-        await ctx.db.delete(args.id)
-    },
-})
-
 export const listServices = query({
     args: {
         organizationId: v.id("organizations"),
@@ -347,3 +264,89 @@ export const listServiceCategories = query({
             .collect()
     },
 })
+
+export const createService = mutation({
+    args: {
+        name: v.string(),
+        description: v.string(),
+        price: v.number(),
+        organizationId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const serviceId = await ctx.db.insert("services", {
+            name: args.name,
+            description: args.description,
+            price: args.price,
+            organizationId: args.organizationId,
+        })
+        return serviceId
+    },
+})
+
+export const getServices = query({
+    args: { organizationId: v.string() },
+    handler: async (ctx, args) => {
+        const services = await ctx.db
+            .table("services")
+            .filter((q) => q.eq(q.field("organizationId"), args.organizationId))
+            .collect()
+        return services
+    },
+})
+
+export const getServiceById = query({
+    args: { id: v.id("services") },
+    handler: async (ctx, args) => {
+        const service = await ctx.db.get(args.id)
+        return service
+    },
+})
+
+export const updateService = mutation({
+    args: {
+        id: v.id("services"),
+        name: v.optional(v.string()),
+        description: v.optional(v.string()),
+        price: v.optional(v.number()),
+        organizationId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const service = await ctx.db.get(args.id)
+
+        if (!service) {
+            throw new Error("Service not found")
+        }
+
+        if (service.organizationId !== args.organizationId) {
+            throw new Error("Unauthorized to update this service")
+        }
+
+        await ctx.db.patch(args.id, {
+            name: args.name,
+            description: args.description,
+            price: args.price,
+        })
+    },
+})
+
+export const deleteService = mutation({
+    args: { id: v.id("services"), organizationId: v.string() },
+    handler: async (ctx, args) => {
+        const service = await ctx.db.get(args.id)
+        if (!service) {
+            throw new Error("Service not found")
+        }
+
+        if (service.organizationId !== args.organizationId) {
+            throw new Error("Unauthorized to delete this service")
+        }
+
+        try {
+            await ctx.db.delete(args.id)
+        } catch (error) {
+            console.error("Error deleting service:", error)
+            throw new Error("Failed to delete service")
+        }
+    },
+})
+

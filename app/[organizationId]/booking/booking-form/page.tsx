@@ -2,7 +2,7 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 17:27:49
+    * @created          : 23/02/2025 - 19:15:20
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
@@ -36,10 +36,14 @@ export default function BookingForm() {
     const searchParams = useSearchParams()
     const [services, setServices] = useState<Service[]>([])
     const [selectedService, setSelectedService] = useState<string>("")
-    const [selectedDate, setSelectedDate] = useState<string>("")
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null)
     const [selectedTime, setSelectedTime] = useState<string>("")
     const [customerName, setCustomerName] = useState<string>("")
     const [customerEmail, setCustomerEmail] = useState<string>("")
+    const [customerPhone, setCustomerPhone] = useState<string>("")
+    const [selectedStaff, setSelectedStaff] = useState<string>("")
+    const [selectedCustomer, setSelectedCustomer] = useState<string>("")
+    const [startTime, setStartTime] = useState<string>("")
 
     const servicesData = useQuery(api.services.getServices, { organizationId: organizationId as string })
     const createBooking = useMutation(api.bookings.createBooking)
@@ -55,9 +59,93 @@ export default function BookingForm() {
         }
         const date = searchParams.get("date")
         if (date) {
-            setSelectedDate(new Date(date).toISOString().split("T")[0])
+            setSelectedDate(new Date(date))
         }
     }, [servicesData, searchParams])
+
+    const handleCreateBooking = async () => {
+        if (
+            !selectedDate ||
+            !selectedService ||
+            !startTime ||
+            !customerName ||
+            !customerEmail ||
+            !selectedStaff ||
+            !selectedCustomer
+        ) {
+            toast({
+                title: "Error",
+                description: "Please fill in all required fields.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        // Additional input validation
+        if (!isValidEmail(customerEmail)) {
+            toast({
+                title: "Error",
+                description: "Please enter a valid email address.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        if (customerPhone && !isValidPhoneNumber(customerPhone)) {
+            toast({
+                title: "Error",
+                description: "Please enter a valid phone number.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        try {
+            await createBooking({
+                organizationId,
+                serviceId: selectedService,
+                date: selectedDate.toISOString().split("T")[0],
+                startTime,
+                staffId: selectedStaff,
+                customerId: selectedCustomer,
+                customerName,
+                customerEmail,
+                customerPhone,
+            })
+
+            toast({
+                title: "Booking created",
+                description: "The booking has been created successfully.",
+            })
+            // Reset form
+            setSelectedDate(new Date())
+            setSelectedService(undefined)
+            setStartTime("")
+            setSelectedStaff(undefined)
+            setSelectedCustomer(undefined)
+            setCustomerName("")
+            setCustomerEmail("")
+            setCustomerPhone("")
+        } catch (error) {
+            console.error(error)
+            toast({
+                title: "Error",
+                description: "Failed to create booking. Please try again.",
+                variant: "destructive",
+            })
+        }
+    }
+
+    // Helper functions for input validation
+    const isValidEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        return emailRegex.test(email)
+    }
+
+    const isValidPhoneNumber = (phone: string) => {
+        const phoneRegex = /^\+?[1-9]\d{1,14}$/
+        return phoneRegex.test(phone)
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -121,7 +209,13 @@ export default function BookingForm() {
             </div>
             <div>
                 <Label htmlFor="date">Date</Label>
-                <Input id="date" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} required />
+                <Input
+                    id="date"
+                    type="date"
+                    value={selectedDate ? selectedDate.toISOString().split("T")[0] : ""}
+                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                    required
+                />
             </div>
             <div>
                 <Label htmlFor="time">Time</Label>

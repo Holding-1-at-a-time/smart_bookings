@@ -2,7 +2,7 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 14:15:43
+    * @created          : 23/02/2025 - 19:18:23
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
@@ -22,7 +22,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
+import { toast } from "@/components/ui/use-toast"
 import { generateText } from "ai"
+import { openai } from "@ai-sdk/openai"
 import { toast } from "@/hooks/use-toast"
 
 
@@ -74,7 +76,7 @@ export default function DynamicAvailabilityChecker() {
         try {
             const selectedServiceData = services?.find((s) => s.id === selectedService)
             const { text } = await generateText({
-                model: open("gpt-4o"),
+                model: openai("gpt-4o"),
                 prompt: `Given the following data:
                  - Business hours: ${JSON.stringify(businessHours)}
                  - Existing appointments: ${JSON.stringify(appointments)}
@@ -97,6 +99,7 @@ export default function DynamicAvailabilityChecker() {
         } finally {
             setIsLoading(false)
         }
+    }, [selectedService, selectedDate, services, businessHours, appointments])
     }, [selectedService, selectedDate, services, appointments, businessHours]) 
 
     return (

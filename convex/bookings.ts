@@ -13,7 +13,7 @@
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 import type { Id } from "./_generated/dataModel"
-import { api } from "./_generated/api"
+import { addMinutes } from "date-fns"
 
 export const getBookingsByDate = query({
     args: { organizationId: v.id("organizations"), date: v.string() },
@@ -88,83 +88,63 @@ export const getAvailableTimeSlots = query({
 })
 
 export const createBooking = mutation({
-    args: {
-        organizationId: v.id("organizations"),
-        serviceId: v.id("services"),
-        staffId: v.id("staff"),
-        customerId: v.id("customers"),
-        date: v.string(),
-        startTime: v.string(),
-    },
-    handler: async (ctx, args) => {
-        const { organizationId, serviceId, staffId, customerId, date, startTime } = args
+  args: {
+    organizationId: v.id("organizations"),
+    serviceId: v.id("services"),
+    staffId: v.id("staff"),
+    customerId: v.id("customers"),
+    date: v.string(),
+    startTime: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { organizationId, serviceId, staffId, customerId, date, startTime } = args
 
-        const service = await ctx.db.get(serviceId)
-        if (!service) {
-            throw new Error("Service not found")
-        }
+    return await ctx.db.transaction(async (tx) => {
+      const service = await tx.get(serviceId)
+      if (!service) {
+        throw new Error("Service not found")
+      }
 
-        const endTime = addMinutes(startTime, service.duration)
+      const endTime = addMinutes(startTime, service.duration)
 
-        // Check for conflicts
-        const existingBookings = await ctx.db
-            .query("bookings")
-            .withIndex("by_organization_and_date", (q) => q.eq("organizationId", organizationId).eq("date", date))
-            .filter((q) => q.eq(q.field("staffId"), staffId))
-            .collect()
+      // Check for conflicts
+      const existingBookings = await tx
+        .query("bookings")
+        .withIndex("by_organization_and_date", (q) => q.eq("organizationId", organizationId).eq("date", date))
+        .filter((q) => q.eq(q.field("staffId"), staffId))
+        .collect()
 
-        const hasConflict = existingBookings.some((booking) => {
-            return (
-                (startTime >= booking.startTime && startTime < booking.endTime) ||
-                (endTime > booking.startTime && endTime <= booking.endTime) ||
-                (startTime <= booking.startTime && endTime >= booking.endTime)
-            )
-        })
+      const hasConflict = existingBookings.some((booking) => {
+        return (
+          (startTime >= booking.startTime && startTime < booking.endTime) ||
+          (endTime > booking.startTime && endTime <= booking.endTime) ||
+          (startTime <= booking.startTime && endTime >= booking.endTime)
+        )
+      })
 
-        if (hasConflict) {
-            throw new Error("Booking conflict: The selected time slot is not available")
-        }
+      if (hasConflict) {
+        throw new Error("Booking conflict detected")
+      }
 
-        // Check service provider availability
-        const serviceProvider = await ctx.db.get(service.providerId)
-        if (!serviceProvider) {
-            throw new Error("Service provider not found")
-        }
+      // Create the booking
+      const newBooking = await tx.insert("bookings", {
+        organizationId,
+        serviceId,
+        staffId,
+        customerId,
+        date,
+        startTime,
+        endTime,
+        status: "confirmed",
+        notes: "",
+      })
 
-        if (!isProviderAvailable(serviceProvider, date, startTime, bookingEndTime)) {
-            throw new Error("Service provider is not available at the selected time")
-        }
-
-        // Create the booking
-        const newBooking = await ctx.db.insert("bookings", {
-            const newBooking = await ctx.db.insert("bookings", {
-                organizationId,
-                serviceId,
-                staffId,
-                customerId,
-                date,
-                startTime,
-                endTime,
-                status: "confirmed",
-                notes: "",
-            })
-
-        // Send booking confirmation
-        try {
-                await ctx.runMutation(api.notifications.sendBookingConfirmation, { bookingId: newBooking })
-            } catch(error) {
-                console.error("Failed to send booking confirmation", error)
-            }
-        // Send booking confirmation
-        try {
-          await ctx.runMutation(api.notifications.sendBookingConfirmation, { bookingId: newBooking })
-        } catch (error) {
-          console.error("Failed to send booking confirmation", error)
-        }
-
-        return newBooking
-        },
+      return newBooking
+    })
+  },
 })
+
+
 
 export const cancelBooking = mutation({
     args: { bookingId: v.id("bookings") },

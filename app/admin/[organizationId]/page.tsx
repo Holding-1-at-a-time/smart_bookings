@@ -54,6 +54,11 @@ export default function AdminOverview() {
             setAiInsight(text)
         } catch (error) {
             console.error("Error generating AI insight:", error)
+            toast({
+                title: "Error",
+                description: "Failed to generate AI insight.",
+                variant: "destructive",
+            })
             setAiInsight("Unable to generate AI insight at this time.")
         }
     }
