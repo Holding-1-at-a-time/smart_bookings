@@ -21,6 +21,7 @@ import { dark } from '@clerk/themes'
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/Header";
+import { Navigation } from "@/components/Navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,6 +63,7 @@ export default function RootLayout({
     >
       <html lang="en">
         <body className={cn(`${geistSans.variable} ${geistMono.variable} antialiased`, 'bg-gray-100 text-white min-h-screen')}>
+          <Navigation />
           <Header /> {/* Header component placed inside the body */}
           <ConvexClientProvider>{children}</ConvexClientProvider>
           <Toaster />

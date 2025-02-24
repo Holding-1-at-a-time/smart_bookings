@@ -13,17 +13,30 @@
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 
-import { v } from "convex/values"
-import { mutation, query } from "./_generated/server"
 
 export const getOrganizationSettings = query({
-    args: { organizationId: v.id("organizations") },
+    args: {
+        organizationId: v.id("organizations"),
+        settings: v.object({
+            timezone: v.string(),
+            currency: v.string(),
+            locale: v.string(),
+            address: v.string(),
+            phone: v.string(),
+            email: v.string(),
+            businessHours: v.string(),
+            website: v.string(),
+            logo: v.optional(v.string()),
+            slug: v.string(),
+            updatedAt: v.any(),
+        }),
+    },
     handler: async (ctx, args) => {
         const organization = await ctx.db.get(args.organizationId)
         if (!organization) {
             throw new Error("Organization not found")
         }
-        return organization
+        return organization.settings
     },
 })
 
@@ -68,12 +81,7 @@ export const updateOrganizationSettings = mutation({
                 ...organization.settings,
                 ...updates.settings,
             },
-            socialMedia: {
-                ...organization.socialMedia,
-                ...updates.socialMedia,
-            },
         }
-
         await ctx.db.replace(organizationId, updatedOrganization)
         return updatedOrganization
     },
@@ -97,7 +105,18 @@ export const updateBusinessHours = mutation({
             throw new Error("Organization not found")
         }
 
-        await ctx.db.patch(organizationId, { businessHours })
+        await ctx.db.patch(organizationId, { settings: {
+            businessHours: JSON.stringify(businessHours),
+            timezone: "",
+            currency: "",
+            locale: "",
+            address: "",
+            phone: "",
+            email: "",
+            website: "",
+            slug: "",
+            updatedAt: undefined
+        } })
         return businessHours
     },
 })
@@ -133,25 +152,7 @@ export const getBusinessHours = query({
         if (!organization) {
             throw new Error("Organization not found")
         }
-        return organization.businessHours
-    },
-})
-
-export const updateBusinessHours = mutation({
-    args: {
-        organizationId: v.id("organizations"),
-        businessHours: v.array(
-            v.object({
-                dayOfWeek: v.number(),
-                start: v.string(),
-                end: v.string(),
-            }),
-        ),
-    },
-    handler: async (ctx, args) => {
-        const { organizationId, businessHours } = args
-        await ctx.db.patch(organizationId, { businessHours })
-        return true
+        return organization.settings.businessHours;
     },
 })
 

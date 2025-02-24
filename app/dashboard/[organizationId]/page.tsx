@@ -10,11 +10,12 @@
     * - Author          : rrome
     * - Modification    : 
 **/
-import { auth, currentUser, OrganizationList } from "@clerk/nextjs"
+import { auth, currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { OrganizationList } from "@clerk/nextjs"
 
 export default async function DashboardPage({ params }: { params: { organizationId: string } }) {
     const { userId, orgId } = auth()

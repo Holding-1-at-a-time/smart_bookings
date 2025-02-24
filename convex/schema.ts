@@ -31,6 +31,10 @@ export default defineSchema({
       slug: v.string(),
       updatedAt: v.any(),
     }),
+    holidays: v.array(v.object({
+      date: v.string(),
+      name: v.string(),
+    })),
     users: v.array(v.string()),
     roles: v.array(v.string()),
     metadata: v.optional(v.any()),
