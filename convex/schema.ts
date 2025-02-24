@@ -16,6 +16,7 @@ import { v } from "convex/values"
 export default defineSchema({
   organizations: defineTable({
     name: v.string(),
+    organizationMembers: v.array(v.id("organizationMembers")),
     ownerId: v.string(),
     settings: v.object({
       timezone: v.string(),
@@ -28,10 +29,29 @@ export default defineSchema({
       website: v.string(),
       logo: v.optional(v.string()),
       slug: v.string(),
+      updatedAt: v.any(),
     }),
+    users: v.array(v.string()),
+    roles: v.array(v.string()),
+    metadata: v.optional(v.any()),
   })
     .index("by_name", ["name"])
     .index("by_owner", ["ownerId"]),
+
+  businessHours: defineTable({
+    organizationId: v.id("organizations"),
+    day: v.string(),
+    startTime: v.string(),
+    endTime: v.string(),
+    hours: v.array(v.object({
+      dayOfWeek: v.number(),
+      start: v.string(),
+      end: v.string(),
+    })),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_organization_and_day", ["organizationId", "day"]),
+
 
   users: defineTable({
     organizationId: v.id("organizations"),
@@ -91,6 +111,8 @@ export default defineSchema({
     maxBookingsPerDay: v.optional(v.number()),
     preparationTime: v.optional(v.number()),
     cleanupTime: v.optional(v.number()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
   })
     .index("by_organization", ["organizationId"])
     .index("by_category", ["categoryId"])
@@ -131,6 +153,7 @@ export default defineSchema({
     totalPrice: v.number(),
   })
     .index("by_organization", ["organizationId"])
+    .index("by_organization_and_by_date", ["organizationId", "date"])
     .index("by_user", ["userId"])
     .index("by_service", ["serviceId"])
     .index("by_date", ["date"])
@@ -152,8 +175,9 @@ export default defineSchema({
     .index("by_organization_and_key_and_value", ["organizationId", "key", "value"]),
 
   bookingFeedback: defineTable({
-    bookingId: v.id("bookings"),
     organizationId: v.id("organizations"),
+    bookingId: v.id("bookings"),
+    feedback: v.string(),
     userId: v.id("users"),
     rating: v.number(),
     comment: v.optional(v.string()),
@@ -196,6 +220,9 @@ export default defineSchema({
 
 
   pricingRequests: defineTable({
+    organizationId: v.id("organizations"),
+    userId: v.id("users"),
+    requestType: v.string(),
     tier: v.string(),
     price: v.string(),
     businessName: v.string(),
@@ -207,5 +234,102 @@ export default defineSchema({
     currentSoftware: v.string(),
     monthlyBookings: v.string(),
     createdAt: v.string(),
-  }),
+  }).index("by_tier", ["tier"])
+    .index("by_price", ["price"])
+    .index("by_business_name", ["businessName"])
+    .index("by_name", ["name"])
+    .index("by_organization", ["organizationId"]),
+
+  staff: defineTable({
+    organizationId: v.id("organizations"),
+    userId: v.id("users"),
+    name: v.string(),
+    email: v.string(),
+    role: v.string(),
+    specialties: v.array(v.string()),
+    isActive: v.boolean(),
+    updatedAt: v.string(),
+    createdAt: v.string(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_user", ["userId"])
+    .index("by_role", ["role"])
+    .index("by_organization_and_role", ["organizationId", "role"]),
+
+  // New table for customer profiles
+  customers: defineTable({
+    organizationId: v.id("organizations"),
+    customerId: v.id("users"),
+    name: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    address: v.optional(v.string()),
+    preferredServices: v.array(v.id("services")),
+    lastVisit: v.optional(v.string()),
+    totalVisits: v.number(),
+    totalSpent: v.number(),
+    notes: v.optional(v.string()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_email", ["email"])
+    .index("by_phone", ["phone"])
+    .index("by_last_visit", ["lastVisit"])
+    .index("by_total_visits", ["totalVisits"])
+    .index("by_total_spent", ["totalSpent"]),
+
+  // New table for promotions and discounts
+  promotions: defineTable({
+    organizationId: v.id("organizations"),
+    promotionId: v.id("promotions"),
+    name: v.string(),
+    description: v.string(),
+    discountType: v.string(), // e.g., "percentage", "fixed_amount"
+    discountValue: v.number(),
+    startDate: v.string(),
+    endDate: v.string(),
+    applicableServices: v.array(v.id("services")),
+    isActive: v.boolean(),
+    usageLimit: v.optional(v.number()),
+    usageCount: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_start_date", ["startDate"])
+    .index("by_end_date", ["endDate"])
+    .index("by_is_active", ["isActive"]),
+
+  // New table for inventory management
+  inventory: defineTable({
+    organizationId: v.id("organizations"),
+    inventoryId: v.id("inventory"),
+    productCode: v.string(),
+    itemName: v.string(),
+    category: v.string(),
+    quantity: v.number(),
+    unit: v.string(),
+    reorderPoint: v.number(),
+    supplierInfo: v.optional(v.string()),
+    lastRestockDate: v.optional(v.string()),
+    cost: v.number(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_category", ["category"])
+    .index("by_quantity", ["quantity"]),
+
+  // New table for AI-generated insights
+  aiInsights: defineTable({
+    organizationId: v.id("organizations"),
+    insightType: v.string(), // e.g., "scheduling_optimization", "pricing_suggestion", "customer_retention"
+    content: v.string(),
+    generatedAt: v.string(),
+    appliedAt: v.optional(v.string()),
+    impact: v.optional(
+      v.object({
+        metric: v.string(),
+        value: v.number(),
+      }),
+    ),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_insight_type", ["insightType"])
+    .index("by_generated_at", ["generatedAt"]),
 })

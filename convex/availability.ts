@@ -11,11 +11,10 @@
     * - Modification    : 
 **/
 import { generateText } from "ai";
-import { groq } from "@ai-sdk/groq";
-import { getProviderAvailability } from "./availability";
-import { v } from "convex/values";
+import { ollama } from 'ollama-ai-provider';
+import { GenericId, v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
-
+import { Id } from "./_generated/types";
 
 export const updateProviderAvailability = mutation({
     args: {
@@ -35,9 +34,9 @@ export const updateProviderAvailability = mutation({
         const { providerId, organizationId, availabilitySlots } = args
 
         // Delete existing availability for the provider
-        await ctx.db
-            .query("availability")
+        await ctx.db.query("availability") // Specify the table name
             .withIndex("by_provider", (q) => q.eq("providerId", providerId))
+            .filter(q => q.eq("organizationId", organizationId))
             .delete()
 
         // Insert new availability slots
@@ -45,6 +44,12 @@ export const updateProviderAvailability = mutation({
             await ctx.db.insert("availability", {
                 providerId,
                 organizationId,
+                startTime: "",
+                endTime: "",
+                dayOfWeek: 0,
+                serviceId: Id<"services">,
+                date: "",
+                isRecurring: false
             })
         }
 
@@ -132,7 +137,7 @@ export const checkAvailability = action({
       - confidenceScore: number
       `;
         const { text } = await generateText({
-            model: groq("gemma2-9b-it"),
+            model: ollama("llama3.1: 8b"),
             prompt: prompt,
         });
 
@@ -154,7 +159,7 @@ export const checkAvailability = action({
         return {
             isAvailable,
             explanation: explanation.trim(),
-            confidenceScore: Number.parseFloat(confidenceScore),
+            confidenceScore: Number.parseFloat(confidenceScoreStr),
         };
     },
 });
