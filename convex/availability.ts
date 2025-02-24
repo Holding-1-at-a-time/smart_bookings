@@ -10,12 +10,14 @@
     * - Author          : rrome
     * - Modification    : 
 **/
+
+import { getRLModel } from "./reinforcementLearning";
 import { generateText } from "ai";
 import { ollama } from 'ollama-ai-provider';
 import { GenericId, v } from "convex/values";
 import { action, mutation, query } from "./_generated/server";
-import { Id } from "./_generated/types";
-
+import { getProviderAvailability, getProviderBookings } from "./bookings";
+import Id from "./_generated/dataModel"
 export const updateProviderAvailability = mutation({
     args: {
         providerId: v.id("users"),
@@ -57,34 +59,6 @@ export const updateProviderAvailability = mutation({
     },
 })
 
-export const getProviderAvailability = query({
-    args: {
-        providerId: v.id("users"),
-        organizationId: v.id("organizations"),
-        date: v.optional(v.string()),
-    },
-    handler: async (ctx, args) => {
-        const { providerId, organizationId, date } = args
-
-        let availabilityQuery = ctx.db
-            .query("availability")
-            .withIndex("by_provider", (q) => q.eq("providerId", providerId))
-            .filter((q) => q.eq(q.field("organizationId"), organizationId))
-
-        if (date) {
-            const dayOfWeek = new Date(date).getDay()
-            availabilityQuery = availabilityQuery.filter((q) =>
-                q.or(
-                    q.and(q.eq(q.field("isRecurring"), true), q.eq(q.field("dayOfWeek"), dayOfWeek)),
-                    q.and(q.eq(q.field("isRecurring"), false), q.eq(q.field("date"), date)),
-                ),
-            )
-        }
-
-        return await availabilityQuery.collect()
-    },
-})
-
 export const checkAvailability = action({
     args: {
         providerId: v.id("users"),
@@ -97,21 +71,20 @@ export const checkAvailability = action({
         const { providerId, organizationId, date, startTime, duration } = args
 
         // Fetch provider's availability
-        const availability = await ctx.runQuery("availability:getProviderAvailability", {
+        const availability = await ctx.runQuery(getProviderAvailability, {
             providerId,
             organizationId,
             date,
-        })
-
+        });
         // Fetch existing bookings
-        const bookings = await ctx.runQuery("bookings:getProviderBookings", {
+        const bookings = await ctx.runQuery(getProviderBookings, {
             providerId,
             organizationId,
             date,
         })
 
         // Fetch RL model
-        const rlModel = await ctx.runQuery("reinforcementLearning:getRLModel", { organizationId })
+        const rlModel = await ctx.runQuery(getRLModel, { organizationId });
 
         // Use Grok to analyze availability and bookings, incorporating the RL model
         const prompt = `
