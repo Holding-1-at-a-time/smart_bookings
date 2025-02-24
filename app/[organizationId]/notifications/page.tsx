@@ -108,6 +108,4 @@ export default function NotificationCenter() {
     )
 }
 
-function setSettings(notificationSettings: any) {
-    throw new Error("Function not implemented.")
-}
+// Removed the unused setSettings function
