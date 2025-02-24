@@ -61,7 +61,7 @@ export default function SignUpPage() {
     const handleVerify = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!isLoaded) return
+        if (!isLoaded) {
 
         try {
             // Use the code the user provided to attempt verification
