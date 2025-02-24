@@ -27,8 +27,8 @@ export const createOrganization = mutation({
             const organizationId = await ctx.db.insert("organizations", {
                 name,
                 ownerId,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
             })
 
             loggingService.info(`Organization created: ${organizationId}`, { name, ownerId })

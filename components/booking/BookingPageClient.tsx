@@ -19,7 +19,7 @@ import type { Id } from "@/convex/_generated/dataModel"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import ErrorBoundary from "@/components/ErrorBoundary"
 import BookingForm from "./components/BookingForm"
 

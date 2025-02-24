@@ -20,8 +20,8 @@ import { api } from "@/convex/_generated/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/components/ui/use-toast"
 import type { Id } from "@/convex/_generated/dataModel"
+import { useToast } from "@/hooks/use-toast"
 
 interface CategoryFormProps {
     organizationId: Id<"organizations">

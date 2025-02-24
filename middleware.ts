@@ -85,4 +85,5 @@ return async (req, auth) => {
         "/(api|trpc)(.*)",
       ],
     }
-    return NextResponse.next(config)
+  }
+}

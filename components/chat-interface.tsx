@@ -20,8 +20,8 @@ import { Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { toast } from "@/components/ui/use-toast"
 import { AIResponseGenerator } from "@/components/ai-response-generator"
+import { toast } from "@/hooks/use-toast"
 
 interface ChatInterfaceProps {
     organizationId: string

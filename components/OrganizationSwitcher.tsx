@@ -10,8 +10,11 @@
     * - Author          : rrome
     * - Modification    : 
 **/
-import { OrganizationSwitcher } from "@clerk/nextjs";
 
+"use client";
+
+import { OrganizationSwitcher } from "@clerk/nextjs";
+import React from "react";
 export default function OrganizationSwitcherComponent() {
     return (
         <OrganizationSwitcher

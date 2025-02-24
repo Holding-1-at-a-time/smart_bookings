@@ -19,7 +19,9 @@ interface AIResponseGeneratorProps {
 }
 
 export function AIResponseGenerator({ isLoading, lastMessage }: AIResponseGeneratorProps) {
-    if (!isLoading && !lastMessage) return null
+    if (!isLoading && !lastMessage) {
+      return null
+    }
 
     return (
         <div className="flex items-center space-x-2">

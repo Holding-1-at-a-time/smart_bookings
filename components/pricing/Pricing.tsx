@@ -11,6 +11,7 @@
     * - Modification    : 
 **/
 // components/Pricing.tsx
+"use client";
 export function Pricing() {
     const plans = [
         {

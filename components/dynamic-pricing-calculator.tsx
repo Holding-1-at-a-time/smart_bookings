@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { createOllama } from "ollama-ai-provider"
 
 interface Service {
     id: string
@@ -52,7 +52,7 @@ export function DynamicPricingCalculator() {
     const generateAISuggestion = async (service: Service, newPrice: number) => {
         try {
             const { text } = await generateText({
-                model: openai("gpt-4o"),
+                model: ollama("llama3.1: 8b"),
                 prompt: `Given the service "${service.name}" with a base price of $${service.basePrice} and a calculated price of $${newPrice} based on current demand, provide a brief suggestion on whether this price is competitive and how it might affect customer demand. Consider factors like market trends and customer perception.`,
             })
             setAiSuggestion(text)

@@ -11,6 +11,7 @@
     * - Modification    : 
 **/
 // app/page.tsx
+
 import { Pricing, Testimonials, FAQ, NewsletterSignup } from '@/components/pricing/Pricing';
 import { Waitlist } from '@clerk/nextjs';
 import { Metadata } from 'next';

@@ -19,6 +19,7 @@ import { useOrganization } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
+import React from "react"
 
 export function Navigation() {
     const { organization } = useOrganization()
