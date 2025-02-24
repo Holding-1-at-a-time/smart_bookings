@@ -75,6 +75,7 @@ export default function BookingForm() {
             router.push(`/${organizationId}/booking/booking-confirmation/${booking.id}`)
         } catch (error) {
             console.error("Error creating booking:", error)
+
             toast({
                 title: "Error",
                 description: "Failed to create booking. Please try again.",

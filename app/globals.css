@@ -198,7 +198,10 @@ select {
     .no-print {
         display: none;
     }
-}
+
+    .print-only {
+        display: block;
+    }}
 
 @layer base {}
 
@@ -209,4 +212,5 @@ select {
   body {
     @apply bg-background text-foreground;
     }
+
 }

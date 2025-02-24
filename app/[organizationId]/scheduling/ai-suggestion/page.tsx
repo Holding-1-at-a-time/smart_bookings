@@ -29,7 +29,6 @@ interface Service {
     name: string
     duration: number
 }
-
 export default function AIScheduleSuggestion() {
     const { organizationId } = useParams()
     const [selectedService, setSelectedService] = useState<string>("")

@@ -30,7 +30,7 @@ export const getBookingsByDate = query({
                     .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
                     .collect();
     },
-});
+})
 
 export const getAvailableTimeSlots = query({
     args: {
@@ -155,6 +155,12 @@ export const createBooking = mutation({
             } catch(error) {
                 console.error("Failed to send booking confirmation", error)
             }
+        // Send booking confirmation
+        try {
+          await ctx.runMutation(api.notifications.sendBookingConfirmation, { bookingId: newBooking })
+        } catch (error) {
+          console.error("Failed to send booking confirmation", error)
+        }
 
         return newBooking
         },

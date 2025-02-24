@@ -65,6 +65,7 @@ export default function ServiceConfiguration() {
             })
         } catch (error) {
             console.error(error)
+
             toast({
                 title: "Error",
                 description: "Failed to add new service. Please try again.",
@@ -195,3 +196,4 @@ export default function ServiceConfiguration() {
         </div>
     )
 }
+

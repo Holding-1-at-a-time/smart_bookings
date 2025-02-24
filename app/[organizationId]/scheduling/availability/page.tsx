@@ -13,6 +13,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+
 import { useParams } from "next/navigation"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
@@ -23,6 +24,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar"
 import { generateText } from "ai"
 import { toast } from "@/hooks/use-toast"
+import { ollama } from 'ollama-ai-provider';
+
 
 interface Service {
     id: string
@@ -57,6 +60,7 @@ export default function DynamicAvailabilityChecker() {
     }, [selectedService, selectedDate, checkAvailability])
 
     const checkAvailability = useCallback(async () => {
+
         if (!selectedService || !selectedDate) {
             toast({
                 title: "Error",
@@ -93,7 +97,7 @@ export default function DynamicAvailabilityChecker() {
         } finally {
             setIsLoading(false)
         }
-    })
+    }, [selectedService, selectedDate, services, appointments, businessHours]) 
 
     return (
         <Card>
