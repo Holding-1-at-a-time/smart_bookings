@@ -99,7 +99,13 @@ export const suggestBookingSlots = query({
                 prompt: prompt,
             })
 
-            const suggestedSlots = JSON.parse(text)
+            let suggestedSlots;
+            try {
+                suggestedSlots = JSON.parse(text)
+            } catch (parseError) {
+                loggingService.error("Failed to parse booking slots JSON", { error: parseError, organizationId, serviceId, date });
+                throw new Error("Failed to parse booking slots response");
+            }
 
             loggingService.info(`Booking slots suggested`, { organizationId, serviceId, date })
             return suggestedSlots
