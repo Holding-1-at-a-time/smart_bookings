@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/Header";
 import { Navigation } from "@/components/Navigation";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
+
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 
 const geistSans = Geist({
