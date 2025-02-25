@@ -12,7 +12,6 @@
 **/
 import { query } from "./_generated/server";
 import { Doc } from "./_generated/dataModel";
-import { getOrganizationById } from "./organizations";
 
 export const getBusinessInfo = query(async ({ db }, organizationId) => {
     // Fetch business information from your database based on businessId
