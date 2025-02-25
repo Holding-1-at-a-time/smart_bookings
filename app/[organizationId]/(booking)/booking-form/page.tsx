@@ -40,7 +40,6 @@ export default function BookingForm() {
     const [selectedTime, setSelectedTime] = useState<string>("")
     const [customerName, setCustomerName] = useState<string>("")
     const [customerEmail, setCustomerEmail] = useState<string>("")
-    const [customerPhone, setCustomerPhone] = useState<string>("")
     const [selectedStaff, setSelectedStaff] = useState<string>("")
     const [selectedCustomer, setSelectedCustomer] = useState<string>("")
     const [startTime, setStartTime] = useState<string>("")
