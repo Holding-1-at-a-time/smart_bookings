@@ -45,7 +45,7 @@ export function ServiceEditor() {
     const updateService = useMutation(api.services.updateService)
     const deleteService = useMutation(api.services.deleteService)
 
-    useState(() => {
+    useEffect(() => {
         if (existingServices) {
             setServices(existingServices)
         }
