@@ -63,78 +63,7 @@ export default function BookingForm() {
         }
     }, [servicesData, searchParams])
 
-    const handleCreateBooking = async () => {
-        if (
-            !selectedDate ||
-            !selectedService ||
-            !startTime ||
-            !customerName ||
-            !customerEmail ||
-            !selectedStaff ||
-            !selectedCustomer
-        ) {
-            toast({
-                title: "Error",
-                description: "Please fill in all required fields.",
-                variant: "destructive",
-            })
-            return
-        }
 
-        // Additional input validation
-        if (!isValidEmail(customerEmail)) {
-            toast({
-                title: "Error",
-                description: "Please enter a valid email address.",
-                variant: "destructive",
-            })
-            return
-        }
-
-        if (customerPhone && !isValidPhoneNumber(customerPhone)) {
-            toast({
-                title: "Error",
-                description: "Please enter a valid phone number.",
-                variant: "destructive",
-            })
-            return
-        }
-
-        try {
-            await createBooking({
-                organizationId,
-                serviceId: selectedService,
-                date: selectedDate.toISOString().split("T")[0],
-                startTime,
-                staffId: selectedStaff,
-                customerId: selectedCustomer,
-                customerName,
-                customerEmail,
-                customerPhone,
-            })
-
-            toast({
-                title: "Booking created",
-                description: "The booking has been created successfully.",
-            })
-            // Reset form
-            setSelectedDate(new Date())
-            setSelectedService(undefined)
-            setStartTime("")
-            setSelectedStaff(undefined)
-            setSelectedCustomer(undefined)
-            setCustomerName("")
-            setCustomerEmail("")
-            setCustomerPhone("")
-        } catch (error) {
-            console.error(error)
-            toast({
-                title: "Error",
-                description: "Failed to create booking. Please try again.",
-                variant: "destructive",
-            })
-        }
-    }
 
     // Helper functions for input validation
     const isValidEmail = (email: string) => {
