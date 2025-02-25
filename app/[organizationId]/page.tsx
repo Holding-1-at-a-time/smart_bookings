@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function HomePage() {
     const { organizationId } = useParams()
-    const businessInfo = useQuery   (api.organizationSettings.getOrganizationSettings);
+    const businessInfo = useQuery(api.organizationSettings.getOrganizationSettings);
     const featuredServices = useQuery(api.services.getFeaturedServices, { organizationId: organizationId as string })
 
     if (!businessInfo) {
