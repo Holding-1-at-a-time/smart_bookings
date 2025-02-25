@@ -152,10 +152,10 @@ export default function SignUpPage() {
                                     card: "shadow-none",
                                 },
                             }} />
-                    </CardContent>
+                    </CardContent> 
                 </Card>
             </div>
         </>
     )
 }
-
+}
