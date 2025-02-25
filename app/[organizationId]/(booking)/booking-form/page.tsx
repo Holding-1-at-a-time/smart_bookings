@@ -41,7 +41,7 @@ export default function BookingForm() {
     const [customerName, setCustomerName] = useState<string>("")
     const [customerEmail, setCustomerEmail] = useState<string>("")
     
-    const [selectedCustomer, setSelectedCustomer] = useState<string>("")
+    
     const [startTime, setStartTime] = useState<string>("")
 
     const servicesData = useQuery(api.services.getServices, { organizationId: organizationId as string })
