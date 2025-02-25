@@ -2,165 +2,93 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 20/02/2025 - 00:23:33
+    * @created          : 23/02/2025 - 20:19:35
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 20/02/2025
+    * - Date            : 23/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
 
 import { v } from "convex/values"
 import { mutation, query } from "./_generated/server"
+import { loggingService } from "../lib/logging-service"
 
-export const upsertOrganizationData = mutation({
+export const createOrganization = mutation({
     args: {
-        organizationId: v.id("organizations"),
-        key: v.string(),
-        value: v.string(),
+        name: v.string(),
+        ownerId: v.string(),
     },
     handler: async (ctx, args) => {
-        const { organizationId, key, value } = args
+        const { name, ownerId } = args
 
-        const existingData = await ctx.db
-            .query("organizationData")
-            .withIndex("by_organization_and_key", (q) => q.eq("organizationId", organizationId).eq("key", key))
-            .first()
-
-        if (existingData) {
-            await ctx.db.patch(existingData._id, { value })
-        } else {
-            await ctx.db.insert("organizationData", {
-                organizationId,
-                key,
-                value,
-                createdAt: new Date().toISOString(),
+        try {
+            const organizationId = await ctx.db.insert("organizations", {
+                name,
+                ownerId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
             })
+
+            loggingService.info(`Organization created: ${organizationId}`, { name, ownerId })
+            return { success: true, organizationId }
+        } catch (error) {
+            loggingService.error(`Error creating organization: ${error}`, { name, ownerId })
+            throw new Error("Failed to create organization")
         }
     },
 })
 
-// Query to list organization data
-export const listOrganizationData = query({
+export const updateOrganization = mutation({
     args: {
         organizationId: v.id("organizations"),
-        count: v.number(),
-        cursor: v.optional(v.string()),
-    },
-    handler: async (ctx, args) => {
-        const { organizationId, count } = args
-
-        const query = ctx.db
-            .query("organizationData")
-            .withIndex("by_organization", q => q.eq("organizationId", organizationId))
-            .order("desc");
-
-        if (args.cursor) {
-            query.filter(q => q.gt(q.field("_id"), organizationId));
-        }
-
-        const data = await query.take(count);
-        const cursor = data.length === count ? data[data.length - 1]._id : null;
-
-        return {
-            data: data.map((item) => ({
-                id: item._id,
-                key: item.key,
-                value: item.value,
-                createdAt: item.createdAt,
-            })),
-            cursor: cursor,
-        }
-    },
-})
-
-// Query to get specific organization data by key
-export const getOrganizationDataByKey = query({
-    args: {
-        organizationId: v.id("organizations"),
-        key: v.string(),
-    },
-    handler: async (ctx, args) => {
-        const { organizationId, key } = args
-
-        const data = await ctx.db
-            .query("organizationData")
-            .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
-            .filter((q) => q.eq(q.field("key"), key))
-            .first()
-
-        return data
-            ? {
-                id: data._id,
-                key: data.key,
-                value: data.value,
-                createdAt: data.createdAt,
-            }
-            : null
-    },
-})
-
-// Mutation to delete organization data
-export const deleteOrganizationData = mutation({
-    args: {
-        organizationId: v.id("organizations"),
-        key: v.string(),
-    },
-    handler: async (ctx, args) => {
-        const { organizationId, key } = args
-
-        const dataToDelete = await ctx.db
-            .query("organizationData")
-            .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
-            .filter((q) => q.eq(q.field("key"), key))
-            .first()
-
-        if (dataToDelete) {
-            await ctx.db.delete(dataToDelete._id)
-            return true
-        }
-        return false
-    },
-})
-
-
-export const getOrganizationData = query({
-    args: {
-        id: v.id("organizations"),
-    },
-    handler: async (ctx, args) => {
-        const organization = await ctx.db.get(args.id)
-        if (!organization) {
-            throw new Error("Organization not found")
-        }
-        return organization
-    },
-})
-
-export const updateOrganizationData = mutation({
-    args: {
-        id: v.id("organizations"),
         name: v.optional(v.string()),
-        email: v.optional(v.string()),
-        address: v.optional(v.string()),
-        phone: v.optional(v.string()),
-        website: v.optional(v.string()),
-        slug: v.optional(v.string()),
-        logo: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const { id, ...updates } = args
-        const existingOrganization = await ctx.db.get(id)
-        if (!existingOrganization) {
-            throw new Error("Organization not found")
-        }
+        const { organizationId, name } = args
 
-        const updatedOrganization = {
-            ...existingOrganization,
-            ...updates,
-        }
+        try {
+            const organization = await ctx.db.get(organizationId)
+            if (!organization) {
+                throw new Error("Organization not found")
+            }
 
-        return await ctx.db.patch(id, updatedOrganization)
+            const updates: { name?: string; updatedAt: string } = {
+                updatedAt: new Date().toISOString(),
+            }
+            if (name !== undefined) {
+                updates.name = name
+            }
+
+            await ctx.db.patch(organizationId, updates)
+
+            loggingService.info(`Organization updated: ${organizationId}`, { updates })
+            return { success: true }
+        } catch (error) {
+            loggingService.error(`Error updating organization: ${error}`, { organizationId, name })
+            throw new Error("Failed to update organization")
+        }
     },
 })
+
+export const getOrganizationById = query({
+    args: { organizationId: v.id("organizations") },
+    handler: async (ctx, args) => {
+        const { organizationId } = args
+
+        try {
+            const organization = await ctx.db.get(organizationId)
+            if (!organization) {
+                throw new Error("Organization not found")
+            }
+
+            loggingService.info(`Organization retrieved: ${organizationId}`)
+            return organization
+        } catch (error) {
+            loggingService.error(`Error retrieving organization: ${error}`, { organizationId })
+            throw new Error("Failed to retrieve organization")
+        }
+    },
+})
+

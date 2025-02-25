@@ -10,7 +10,7 @@
     * - Author          : rrome
     * - Modification    : 
 **/
-
+"use client"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -18,6 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "convex/react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import React from "react";
 
 
 interface CategoryListProps {

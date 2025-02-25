@@ -13,12 +13,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { useStorage } from "@/convex/_generated/react"
+import { useStorage } from "./_generated/server"
 import type { Id } from "@/convex/_generated/dataModel"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface ImageUploaderProps {
     currentImage: string

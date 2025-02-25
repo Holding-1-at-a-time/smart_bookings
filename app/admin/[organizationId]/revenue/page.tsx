@@ -2,7 +2,7 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 14:47:47
+    * @created          : 23/02/2025 - 19:17:45
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
@@ -19,6 +19,7 @@ import { api } from "@/convex/_generated/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { auth } from "@clerk/nextjs"
 
 interface RevenueData {
     date: string
@@ -26,9 +27,14 @@ interface RevenueData {
 }
 
 export default function RevenueAnalytics() {
+    const { userId } = auth()
     const { organizationId } = useParams()
     const [timeFrame, setTimeFrame] = useState<"week" | "month" | "year">("week")
     const [revenueData, setRevenueData] = useState<RevenueData[]>([])
+
+    if (!userId) {
+        return <div>Unauthorized</div>
+    }
 
     const data = useQuery(api.admin.getRevenueData, {
         organizationId: organizationId as string,

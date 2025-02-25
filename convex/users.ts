@@ -12,13 +12,89 @@
  **/
 
 import { v } from "convex/values";
-import { mutation, Mutation } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { query } from "./_generated/server";
 
 
-/**
- * Public mutation to create or update a user.
- */
+
+import { loggingService } from "../lib/logging-service"
+
+export const updateUserInfo = mutation({
+    args: {
+        userId: v.string(),
+        email: v.string(),
+        name: v.string(),
+        orgId: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const { userId, email, name, orgId } = args
+
+        try {
+            // Check if user exists
+            const existingUser = await ctx.db
+                .query("users")
+                .withIndex("by_clerk_id", (q) => q.eq("clerkId", userId))
+                .first()
+
+            if (existingUser) {
+                // Update existing user
+                await ctx.db.patch(existingUser._id, {
+                    email,
+                    name,
+                    updatedAt: new Date().toISOString(),
+                })
+
+                // Update organization relationship if orgId is provided
+                if (orgId) {
+                    const existingOrgMembership = await ctx.db
+                        .query("organizationMembers")
+                        .withIndex("by_user_and_org", (q) => q.eq("userId", existingUser._id).eq("organizationId", orgId))
+                        .first()
+
+                    if (!existingOrgMembership) {
+                        // Create new organization membership
+                        await ctx.db.insert("organizationMembers", {
+                            userId: existingUser._id,
+                            organizationId: orgId,
+                            role: "member", // Default role
+                            joinedAt: new Date().toISOString(),
+                        })
+                    }
+                }
+
+                loggingService.info(`User updated: ${userId}`, { email, name, orgId })
+                return { success: true, userId: existingUser._id }
+            }
+
+            // Create new user
+            const newUserId = await ctx.db.insert("users", {
+                clerkId: userId,
+                email,
+                name,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            })
+
+            // Create organization membership if orgId is provided
+            if (orgId) {
+                await ctx.db.insert("organizationMembers", {
+                    userId: newUserId,
+                    organizationId: orgId,
+                    role: "member", // Default role
+                    joinedAt: new Date().toISOString(),
+                })
+            }
+
+            loggingService.info(`New user created: ${userId}`, { email, name, orgId })
+            return { success: true, userId: newUserId }
+        } catch (error) {
+            loggingService.error(`Error updating user info: ${error}`, { userId, email, name, orgId })
+            throw new Error("Failed to update user information")
+        }
+    },
+})
+
+
 export const createOrUpdateUser = mutation({
     args: {
         clerkId: v.string(),
