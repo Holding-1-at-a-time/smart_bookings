@@ -12,7 +12,7 @@
 **/
 "use client";
 
-import React, { Children } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
