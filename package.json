@@ -54,7 +54,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tar": "7.0.1",
     "undici": "5.28.5",
-    "vercel": "^41.2.0"
+    "vercel": "^41.2.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.0",
