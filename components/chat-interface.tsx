@@ -31,7 +31,7 @@ export function ChatInterface({ organizationId }: ChatInterfaceProps) {
     const [isLoading, setIsLoading] = useState(false)
     const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-    const { messages, input, handleInputChange, handleSubmit, error } = useChat({
+    const { messages, input, handleInputChange, handleSubmit } = useChat({
         api: `/api/chat/${organizationId}`,
         onError: (error) => {
             console.error("Chat error:", error)
