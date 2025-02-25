@@ -18,11 +18,10 @@ export const processPayment = mutation({
     args: {
         organizationId: v.id("organizations"),
         amount: v.number(),
-        cardToken: v.string(),
         bookingId: v.id("bookings"),
     },
     handler: async (ctx, args) => {
-        const { organizationId, amount, cardToken, bookingId } = args
+        const { organizationId, amount, bookingId } = args
 
         try {
             // Implement payment processing logic here (e.g., using Stripe)
