@@ -70,10 +70,7 @@ export default function BookingForm() {
         return emailRegex.test(email)
     }
 
-    const isValidPhoneNumber = (phone: string) => {
-        const phoneRegex = /^\+?[1-9]\d{1,14}$/
-        return phoneRegex.test(phone)
-    }
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
