@@ -42,7 +42,6 @@ export default function BookingForm() {
     const [customerEmail, setCustomerEmail] = useState<string>("")
     
     
-    const [startTime, setStartTime] = useState<string>("")
 
     const servicesData = useQuery(api.services.getServices, { organizationId: organizationId as string })
     const createBooking = useMutation(api.bookings.createBooking)
