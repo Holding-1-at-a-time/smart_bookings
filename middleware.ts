@@ -1,109 +1,110 @@
 /**
- * @description      : Clerk Next.js middleware with Convex integration
- * @author           : rrome
- * @group            : 
- * @created          : 24/02/2025 - 00:20:16
- * 
- * MODIFICATION LOG
- * - Version         : 1.0.0
- * - Date            : 24/02/2025
- * - Author          : rrome
- * - Modification    : 
- */
-import { ConvexHttpClient } from "convex/browser"
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
+    * @description      : 
+    * @author           : rrome
+    * @group            : 
+    * @created          : 26/02/2025 - 09:19:24
+    * 
+    * MODIFICATION LOG
+    * - Version         : 1.0.0
+    * - Date            : 26/02/2025
+    * - Author          : rrome
+    * - Modification    : 
+**/
 import { NextResponse } from "next/server"
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { toast } from "./hooks/use-toast";
-import { getUserRole } from "./convex/auth";
+import { authMiddleware, clerkClient } from "@clerk/nextjs/server"
+import { updateUserInfo } from "./convex/auth"
+import { verifyAuth } from "./lib/auth"
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+export default authMiddleware({
+  async afterAuth(auth, req, evt) {
+    const { userId, orgId } = auth
+    const { pathname } = req.nextUrl
 
-const adminRoutes = ["/admin"]; // Define admin routes
-
-
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/admin(.*)", "/api(.*)", "/booking(.*)"])
-
-
-
-export default async function middleware(req: any, auth: any) {
-  // Check if the user is authenticated for public routes
-  if (isPublicRoute(req)) {
-    return NextResponse.next()
-  } else if (isProtectedRoute(req) && !auth.userId) {
-    const signInUrl = new URL(process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.url);
-    return NextResponse.redirect(signInUrl);
-  }
-  // Fetch user data and permissions if authenticated
-  if (auth.userId) {
-    const user = await auth.users.getUser(auth.userId)
-    const orgPermissions = auth.orgId
-      ? await auth.organizations.getOrganizationMembershipPublicMetadata(auth.orgId, auth.userId)
-      : null
-    // Add user data and permissions to the request headers
-    req.headers.set("X-User-Id", auth.userId)
-    req.headers.set("X-User-Email", user.emailAddresses[0].emailAddress)
-    req.headers.set("X-User-Name", `${user.firstName} ${user.lastName}`)
-    if (orgPermissions) {
-      req.headers.set("X-Org-Permissions", JSON.stringify(orgPermissions))
-    }
-    // Update Convex with user information
-    try {
-      await useMutation(api.users.updateUserInfo)({
-        ...req, params: {
-          userId: auth.userId,
-          email: user.emailAddresses[0].emailAddress,
-          name: `${user.firstName} ${user.lastName}`,
-          orgId: auth.orgId,
-          orgPermissions: orgPermissions,
-        },
-      })
-    }
-    catch (error) {
-      console.error("Failed to update user info in Convex:", error)
-      toast({
-        title: "Error updating user info",
-        description: "Failed to update user info in Convex",
-        variant: "destructive",
-      })
-    }
-  }
-  // Implement organization-specific data isolation
-  if (auth.orgId) {
-    req.headers.set("X-Organization-Id", auth.orgId)
-
-    // Update Convex queries to include organization ID
-    const originalUrl = new URL(req.url)
-    if (originalUrl.pathname.startsWith("/api/convex")) {
-      const convexUrl = new URL(originalUrl)
-      convexUrl.searchParams.set("organizationId", auth.orgId)
-      req.headers.set("x-convex-url", convexUrl.toString())
-    }
-
-
-    if (auth.userId && !auth.orgId && req.nextUrl.pathname !== "/org-selection") {
-      const orgSelection = new URL("/org-selection", req.url)
-      return NextResponse.redirect(orgSelection)
-    }
-
-    if (auth.userId && auth.orgId) {
-      const role = await getUserRole(auth.userId, auth.orgId)
-
-      if (adminRoutes.some((route) => req.nextUrl.pathname.startsWith(route)) && role !== "admin") {
-        return NextResponse.redirect(new URL("/dashboard", req.url))
+    // Handle authentication for protected routes
+    if (
+      pathname.startsWith("/dashboard") ||
+      pathname.startsWith("/admin") ||
+      pathname.startsWith("/api") ||
+      pathname.startsWith("/booking")
+    ) {
+      if (!userId) {
+        const signInUrl = new URL("/sign-in", req.url)
+        signInUrl.searchParams.set("redirect_url", req.url)
+        return NextResponse.redirect(signInUrl)
       }
     }
+
+    // Handle organization selection
+    if (userId && !orgId && pathname !== "/org-selection") {
+      return NextResponse.redirect(new URL("/org-selection", req.url))
+    }
+
+    // Role-based access control
+    if (userId && orgId) {
+      const user = await clerkClient.users.getUser(userId)
+      const orgMembership = user.organizationMemberships.find((membership) => membership.organization.id === orgId)
+
+      if (orgMembership) {
+        const role = orgMembership.role
+
+        if (pathname.startsWith("/admin") && role !== "admin") {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
+        }
+
+        if (pathname.startsWith("/manager") && !["admin", "manager"].includes(role)) {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
+        }
+
+        if (pathname.startsWith("/detailer") && !["admin", "manager", "detailer"].includes(role)) {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
+        }
+
+        if (pathname.startsWith("/client") && role !== "client") {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
+        }
+      }
+    }
+
+    // Manual JWT verification
+    const token = req.headers.get("Authorization")?.split(" ")[1]
+    if (token) {
+      const { isValid, payload } = await verifyAuth(token)
+      if (!isValid) {
+        return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+      }
+      // You can use the payload for additional checks or to set custom headers
+    }
+
+    // Set headers
+    const response = NextResponse.next()
+    response.headers.set("X-User-Id", userId || "")
+    response.headers.set("X-Organization-Id", orgId || "")
+
+    // Update user info in Convex
+    if (userId && orgId) {
+      await updateUserInfoInConvex(userId, orgId)
+    }
+
+    return response
+  },
+})
+
+async function updateUserInfoInConvex(userId: string, orgId: string) {
+  const user = await clerkClient.users.getUser(userId)
+  const orgMembership = user.organizationMemberships.find((membership) => membership.organization.id === orgId)
+
+  if (user && orgMembership) {
+    await updateUserInfo({
+      userId,
+      email: user.emailAddresses[0]?.emailAddress || "",
+      name: `${user.firstName} ${user.lastName}`,
+      orgId,
+      orgPermissions: orgMembership.permissions,
+    })
   }
-  // Continue to the next middleware or to the destination
-  const config = {
-    matcher: [
-      // Skip Next.js internals and all static files, unless found in search params
-      "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-      // Always run for API routes
-      "/(api|trpc)(.*)",
-    ]
-  }
-  return {}
 }
+
+export const config = {
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+}
+

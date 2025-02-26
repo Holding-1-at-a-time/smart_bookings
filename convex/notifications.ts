@@ -87,7 +87,8 @@ try {
     templateType,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  })const notification = await ctx.db.insert("notifications", {
+  });
+  const notification = await ctx.db.insert("notifications", {
     organizationId,
     toUserId: toUerId,
     fromUserId,
@@ -125,8 +126,6 @@ try {
     organizationId, toUserId, fromUserId, read, templateId, templateData, subject, templateType
   })
 }
-  },
-
 export const sendSMSNotificationGoogleChat = httpAction({
   args: {
     organizationId: v.id("organizations"),
@@ -138,7 +137,7 @@ export const sendSMSNotificationGoogleChat = httpAction({
     read: v.boolean(),
     templateType: v.string(),
   },
-  async handler(ctx, args) => {
+  async handler(ctx, args) {
   const { organizationId, toUserId, fromUserId, read, templateId, templateData, subject, templateType } = args
   const notification = await ctx.db.insert("notifications", {
     organizationId,
@@ -203,7 +202,7 @@ export const sendSMSNotificationGoogleChat = httpAction({
     throw new Error("Failed to send SMS notification")
   }
 },
-
+},
 
 // TODO: Implement sendSMS notifications, email notifications, and other types of notifications using Google API's and other services from Google Cloud
 

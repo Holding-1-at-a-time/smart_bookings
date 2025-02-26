@@ -142,7 +142,7 @@ export const forecastDemand = query({
  * @param bookings - An array of booking dates as strings.
  * @returns The forecasted demand as a number.
  */
-export const aiForecastDemand = async (bookings: string[]): Promise<number> {
+export const aiForecastDemand = async (bookings: string[]): Promise<number> => {
     // Convert booking dates to timestamp objects
     const bookingData = bookings.map((date) => ({
         date: new Date(date).getTime(),
@@ -210,9 +210,8 @@ export const aiBookingForecast: (bookings: string[]) => Promise<number> = async 
     return futureBookings.reduce((sum: number, point: { yhat: number; }) => sum + point.yhat, 0) / futureBookings.length;
 };
 
-export async function prophet(data:) {
-    // Create a new Prophet model instance
-    const model = new Prophet();
+export async function prophet(data: any): Promise<any> {    // Create a new Prophet model instance
+    const model = new prophet();
 
     // Train the model on the historical data
     model.fit(data);
@@ -298,4 +297,3 @@ export async function prophet(data:) {
         //*    };
         //*
         //*export default forecastDemand;
-        *//

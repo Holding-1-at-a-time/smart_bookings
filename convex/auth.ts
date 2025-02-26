@@ -11,38 +11,77 @@
     * - Modification    : 
 **/
 import { v } from "convex/values"
-import { mutation, query } from "./_generated/server"
+import {mutation, query } from "./_generated/server"
 import { loggingService } from "../lib/logging-service"
 
 export const getUserRole = query({
-    args: { userId: v.string(), organizationId: v.string() },
+    args: { userId: v.string(), orgId: v.string() },
     handler: async (ctx, args) => {
-        const { userId, organizationId } = args
+        const { userId, orgId } = args
 
-        try {
-            const user = await ctx.db
-                .query("users")
-                .withIndex("by_clerk_id", (q) => q.eq("clerkId", userId))
-                .first()
+        // Query the user's role from the database
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", userId))
+            .first()
 
-            if (!user) {
-                throw new Error("User not found")
-            }
-
-            const orgMembership = await ctx.db
-                .query("organizationMembers")
-                .withIndex("by_user_and_org", (q) => q.eq("userId", user._id).eq("organizationId", organizationId))
-                .first()
-
-            if (!orgMembership) {
-                throw new Error("User is not a member of this organization")
-            }
-
-            return orgMembership.role
-        } catch (error) {
-            loggingService.error(`Error getting user role: ${error}`, { userId, organizationId })
-            throw new Error("Failed to get user role")
+        if (!user) {
+            return null
         }
+
+        // Query the user's role in the organization
+        const orgMembership = await ctx.db
+            .query("organizationMembers")
+            .withIndex("by_user_and_org", (q) => q.eq("userId", user._id).eq("organizationId", orgId))
+            .first()
+
+        return orgMembership?.role || null
+    },
+})
+
+export const updateUserInfo = query({
+    args: {
+        userId: v.string(),
+        email: v.string(),
+        name: v.string(),
+        orgId: v.optional(v.string()),
+        orgPermissions: v.optional(v.any()),
+    },
+    handler: async (ctx, args) => {
+        const { userId, email, name, orgId, orgPermissions } = args
+
+        // Update or create user
+        const existingUser = await ctx.db
+            .query("users")
+            .withIndex("by_clerk_id", (q) => q.eq("clerkId", userId))
+            .first()
+
+        if (existingUser) {
+            await ctx.db.patch(existingUser._id, { email, name })
+        } else {
+            await ctx.db.insert("users", { clerkId: userId, email, name })
+        }
+
+        // Update organization membership if orgId is provided
+        if (orgId) {
+            const existingMembership = await ctx.db
+                .query("organizationMembers")
+                .withIndex("by_user_and_org", (q) => q.eq("userId", existingUser?._id).eq("organizationId", orgId))
+                .first()
+
+            if (existingMembership) {
+                await ctx.db.patch(existingMembership._id, { permissions: orgPermissions })
+            } else {
+                await ctx.db.insert("organizationMembers", {
+                    userId: existingUser?._id,
+                    organizationId: orgId,
+                    role: "member", // Default role
+                    permissions: orgPermissions,
+                })
+            }
+        }
+
+        return { success: true }
     },
 })
 
