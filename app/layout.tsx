@@ -17,7 +17,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, RedirectToSignIn } from "@clerk/nextjs";
 import { dark } from '@clerk/themes'
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
@@ -25,6 +25,7 @@ import Header from "@/components/Header";
 import { Navigation } from "@/components/Navigation";
 
 import ConvexClientProvider from "@/components/ConvexClientProvider";
+import { EmailAddress } from "@clerk/backend";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,17 +65,23 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="en">
-        <body className={cn(`${geistSans.variable} ${geistMono.variable} antialiased`, 'bg-gray-100 text-white min-h-screen')}>
-          <Navigation />
-          <Header /> {/* Header component placed inside the body */}
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-          <Toaster />
-          <Analytics />
-          <SpeedInsights />
-          <footer />
-        </body>
-      </html>
+      <ConvexClientProvider>
+
+        <html lang="en">
+          <body className={cn(`${geistSans.variable} ${geistMono.variable} antialiased`, 'bg-gray-100 text-white min-h-screen')}>
+            <Navigation />
+            <Header /> {/* Header component placed inside the body */}
+            <main className="min-h-screen bg-gray-100 pt-16">{children}</main>
+            <RedirectToSignIn
+              signInFallbackRedirectUrl={process.env.NEXT_PUBLIC_SIGN_IN_URL}
+            />
+            <Toaster />
+            <Analytics />
+            <SpeedInsights />
+            <footer />
+          </body>
+        </html>
+      </ConvexClientProvider>
     </ClerkProvider>
   );
 }

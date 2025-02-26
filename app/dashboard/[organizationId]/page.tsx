@@ -2,20 +2,19 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 20:00:20
+    * @created          : 24/02/2025 - 08:08:54
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 23/02/2025
+    * - Date            : 24/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
-import { auth, currentUser } from "@clerk/nextjs/server"
+import { auth, currentUser } from "@clerk/nextjs"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { OrganizationList } from "@clerk/nextjs"
 
 export default async function DashboardPage({ params }: { params: { organizationId: string } }) {
     const { userId, orgId } = auth()
@@ -26,16 +25,7 @@ export default async function DashboardPage({ params }: { params: { organization
     }
 
     if (!orgId) {
-        return (
-            <div className="container mx-auto p-4">
-                <h1 className="text-2xl font-bold mb-4">Select an Organization</h1>
-                <OrganizationList
-                    hidePersonal
-                    afterSelectOrganizationUrl={`/dashboard/${params.organizationId}`}
-                    afterCreateOrganizationUrl={`/dashboard/${params.organizationId}`}
-                />
-            </div>
-        )
+        redirect("/org-management")
     }
 
     if (orgId !== params.organizationId) {

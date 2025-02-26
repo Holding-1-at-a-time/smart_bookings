@@ -2,7 +2,7 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 24/02/2025 - 10:17:26
+    * @created          : 24/02/2025 - 10:16:10
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
@@ -20,4 +20,5 @@ export default function ChatLoading() {
         </div>
     )
 }
+
 

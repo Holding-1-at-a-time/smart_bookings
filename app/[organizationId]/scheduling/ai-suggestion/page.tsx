@@ -2,42 +2,47 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 14:15:13
+    * @created          : 25/02/2025 - 09:22:14
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 23/02/2025
+    * - Date            : 25/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
 "use client"
 
 import { useState } from "react"
-import { useParams } from "next/navigation"
+import React, { useParams } from "next/navigation"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { generateText } from "ai"
-import { ollama } from 'ollama-ai-provider';
-import { toast } from "@/hooks/use-toast"
+import { useCompletion } from "ai/react"
+import { toast} from "@/hooks/use-toast"
+
+
 
 interface Service {
     id: string
     name: string
     duration: number
 }
+
 export default function AIScheduleSuggestion() {
     const { organizationId } = useParams()
     const [selectedService, setSelectedService] = useState<string>("")
     const [aiSuggestion, setAiSuggestion] = useState<string>("")
     const [isLoading, setIsLoading] = useState<boolean>(false)
 
-    const services = useQuery(api.services.getServices, { organizationId: organizationId as string })
-    const appointments = useQuery(api.appointments.getAppointments, { organizationId: organizationId as string })
-    const scheduleAppointment = useMutation(api.appointments.scheduleAppointment)
+    const services = useQuery(api.services.listServices, { Id: organizationId as string })
+    const predictOptimalSlots = useMutation(api.scheduling.predictOptimalSlots)
+
+    const { complete } = useCompletion({
+        api: "/api/ai/schedule-suggestion",
+    })
 
     const handleGetSuggestion = async () => {
         if (!selectedService) {
@@ -51,15 +56,16 @@ export default function AIScheduleSuggestion() {
 
         setIsLoading(true)
         try {
-            const selectedServiceData = services?.find((s) => s.id === selectedService)
-            const { text } = await generateText({
-                model: ollama("llama3.1: 8b"),
-                prompt: `Given the following appointments: ${JSON.stringify(appointments)}, 
-                 and the selected service: ${JSON.stringify(selectedServiceData)}, 
-                 suggest the best 3 time slots for scheduling this service in the next 7 days. 
-                 Consider factors like business hours, existing appointments, and optimal time slots for the specific service.`,
+            const optimalSlots = await predictOptimalSlots({
+                organizationId: organizationId as string,
+                serviceId: selectedService,
             })
-            setAiSuggestion(text)
+
+            const aiResponse = await complete(
+                `Given the following optimal slots for the selected service: ${JSON.stringify(optimalSlots)}, suggest the best 3 time slots for scheduling this service in the next 7 days. Consider factors like business hours, existing appointments, and optimal time slots for the specific service.`,
+            )
+
+            setAiSuggestion(aiResponse)
         } catch (error) {
             console.error("Error getting AI suggestion:", error)
             toast({
@@ -69,27 +75,6 @@ export default function AIScheduleSuggestion() {
             })
         } finally {
             setIsLoading(false)
-        }
-    }
-
-    const handleScheduleAppointment = async (suggestedTime: string) => {
-        try {
-            await scheduleAppointment({
-                organizationId: organizationId as string,
-                serviceId: selectedService,
-                date: new Date(suggestedTime).toISOString(),
-            })
-            toast({
-                title: "Success",
-                description: "Appointment scheduled successfully.",
-            })
-        } catch (error) {
-            console.error("Error scheduling appointment:", error)
-            toast({
-                title: "Error",
-                description: "Failed to schedule appointment. Please try again.",
-                variant: "destructive",
-            })
         }
     }
 
@@ -122,14 +107,6 @@ export default function AIScheduleSuggestion() {
                         <div className="mt-4">
                             <h3 className="text-lg font-semibold mb-2">AI Suggestions:</h3>
                             <p className="whitespace-pre-line">{aiSuggestion}</p>
-                            <div className="mt-4">
-                                <h4 className="text-md font-semibold mb-2">Schedule an appointment:</h4>
-                                {aiSuggestion.split("\n").map((suggestion, index) => (
-                                    <Button key={index} onClick={() => handleScheduleAppointment(suggestion)} className="mr-2 mb-2">
-                                        Schedule for {suggestion}
-                                    </Button>
-                                ))}
-                            </div>
                         </div>
                     )}
                 </div>

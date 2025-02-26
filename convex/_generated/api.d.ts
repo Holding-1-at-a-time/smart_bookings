@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as ai from "../ai.js";
 import type * as analytics from "../analytics.js";
+import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
 import type * as businesses from "../businesses.js";
 import type * as customers from "../customers.js";
@@ -43,6 +44,7 @@ import type * as weather from "../weather.js";
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   analytics: typeof analytics;
+  auth: typeof auth;
   bookings: typeof bookings;
   businesses: typeof businesses;
   customers: typeof customers;

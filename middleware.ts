@@ -12,19 +12,26 @@
  */
 import { ConvexHttpClient } from "convex/browser"
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
+import { NextResponse } from "next/server"
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { toast } from "./hooks/use-toast";
-import { api } from "./convex/_generated/api";
+import { getUserRole } from "./convex/auth";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
+const adminRoutes = ["/admin"]; // Define admin routes
+
 
 const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/admin(.*)", "/api(.*)", "/booking(.*)"])
 
 
 
-export default clerkMiddleware()
-return async (req, auth) => {
-  // Check if the user is authenticated for protected routes
-  if (isProtectedRoute(req) && !auth.userId) {
+export default async function middleware(req: any, auth: any) {
+  // Check if the user is authenticated for public routes
+  if (isPublicRoute(req)) {
+    return NextResponse.next()
+  } else if (isProtectedRoute(req) && !auth.userId) {
     const signInUrl = new URL(process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in", req.url);
     signInUrl.searchParams.set("redirect_url", req.url);
     return NextResponse.redirect(signInUrl);
@@ -35,7 +42,6 @@ return async (req, auth) => {
     const orgPermissions = auth.orgId
       ? await auth.organizations.getOrganizationMembershipPublicMetadata(auth.orgId, auth.userId)
       : null
-
     // Add user data and permissions to the request headers
     req.headers.set("X-User-Id", auth.userId)
     req.headers.set("X-User-Email", user.emailAddresses[0].emailAddress)
@@ -45,15 +51,15 @@ return async (req, auth) => {
     }
     // Update Convex with user information
     try {
-      await convex.mutation(api.users.updateUserInfo,
-        {
-          userId: auth.userId, // Add userId back to the mutation arguments
+      await useMutation(api.users.updateUserInfo)({
+        ...req, params: {
+          userId: auth.userId,
           email: user.emailAddresses[0].emailAddress,
           name: `${user.firstName} ${user.lastName}`,
           orgId: auth.orgId,
-          organizationPermissions: orgPermissions,
-        }
-      )
+          orgPermissions: orgPermissions,
+        },
+      })
     }
     catch (error) {
       console.error("Failed to update user info in Convex:", error)
@@ -76,7 +82,28 @@ return async (req, auth) => {
       req.headers.set("x-convex-url", convexUrl.toString())
     }
 
-    // Continue to the next middleware or to the destination
 
+    if (auth.userId && !auth.orgId && req.nextUrl.pathname !== "/org-selection") {
+      const orgSelection = new URL("/org-selection", req.url)
+      return NextResponse.redirect(orgSelection)
+    }
+
+    if (auth.userId && auth.orgId) {
+      const role = await getUserRole(auth.userId, auth.orgId)
+
+      if (adminRoutes.some((route) => req.nextUrl.pathname.startsWith(route)) && role !== "admin") {
+        return NextResponse.redirect(new URL("/dashboard", req.url))
+      }
+    }
   }
+  // Continue to the next middleware or to the destination
+  const config = {
+    matcher: [
+      // Skip Next.js internals and all static files, unless found in search params
+      "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+      // Always run for API routes
+      "/(api|trpc)(.*)",
+    ]
+  }
+  return {}
 }

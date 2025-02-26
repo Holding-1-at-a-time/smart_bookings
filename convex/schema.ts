@@ -12,6 +12,7 @@
 **/
 import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
+import { userInfo } from "os"
 
 export default defineSchema({
   organizations: defineTable({
@@ -108,7 +109,7 @@ export default defineSchema({
     name: v.string(),
     description: v.string(),
     duration: v.number(),
-    price: v.number(),
+    basePrice: v.number(),
     isActive: v.boolean(),
     features: v.array(v.string()),
     images: v.optional(v.array(v.string())),
@@ -245,6 +246,7 @@ export default defineSchema({
     .index("by_organization", ["organizationId"]),
 
   staff: defineTable({
+
     organizationId: v.id("organizations"),
     userId: v.id("users"),
     name: v.string(),
@@ -336,4 +338,37 @@ export default defineSchema({
     .index("by_organization", ["organizationId"])
     .index("by_insight_type", ["insightType"])
     .index("by_generated_at", ["generatedAt"]),
+
+  organizationMembers: defineTable({
+    userId: v.id("users"),
+    organizationId: v.string(),
+    role: v.string(),
+    joinedAt: v.string(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_organization", ["organizationId"])
+    .index("by_user_and_org", ["userId", "organizationId"]),
+
+  notificationTemplates: defineTable({
+    organizationId: v.id("organizations"),
+    userId: v.id("users"),
+    templateType: v.string(),
+    templateContent: v.string(),
+    created_at: v.string(),
+    createdBy: v.string(),
+    sendTo: v.string(),
+    templateData: v.string(),
+    templateId: v.id("notificationTemplates"),
+    name: v.string(),
+    subject: v.string(),
+    body: v.string(),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_name", ["name"])
+    .index("by_organization_and_template_type", ["organizationId", "templateType"])
+    .index("by_organization_and_template_id", ["organizationId", "templateId"])
+    .index("by_organization_and_user", ["organizationId", "userId"])
+    .index("by_organization_and_name", ["organizationId", "name"]),
 })

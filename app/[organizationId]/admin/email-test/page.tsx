@@ -15,19 +15,21 @@
 import { useState } from "react"
 import { useParams } from "next/navigation"
 import { useMutation } from "convex/react"
-import { api } from "@/convex/_generated/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
+import { api } from "../convex/_generated/api";
+
+
 
 export default function EmailTest() {
     const { organizationId } = useParams()
     const [testEmail, setTestEmail] = useState("")
     const [isSending, setIsSending] = useState(false)
 
-    const sendNotificationEmail = useMutation(api.notifications.sendNotificationEmail)
+    const sendNotificationEmail =(useMutation(api.notifications.sendNotificationEmail);
 
     const handleSendTestEmail = async () => {
         if (!testEmail) {
