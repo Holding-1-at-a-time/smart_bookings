@@ -195,8 +195,8 @@ async function fetchBookingsForDate(
         organizationId,
         date,
     };
-    const bookings = await query(args);
-    return bookings;
+    return await query(args);
+
 }
 /**
  * Saves a booking to the Convex database.
