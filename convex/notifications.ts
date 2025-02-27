@@ -42,7 +42,7 @@ export const createNotificationTemplate = mutation({
         body,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        userId: "users",
+        userId: "",
         templateType: "",
         templateContent: "",
         created_at: "",
@@ -138,71 +138,70 @@ export const sendSMSNotificationGoogleChat = httpAction({
     templateType: v.string(),
   },
   async handler(ctx, args) {
-  const { organizationId, toUserId, fromUserId, read, templateId, templateData, subject, templateType } = args
-  const notification = await ctx.db.insert("notifications", {
-    organizationId,
-    toUserId,
-    fromUserId,
-    templateId,
-    templateData,
-    subject,
-    read, templateType,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  })
-
-  const template = await ctx.db.get(templateId)
-  if (!template) {
-    return { success: false, error: "Notification template not found" }
-  }
-  try {
+    const { organizationId, toUserId, fromUserId, read, templateId, templateData, subject, templateType } = args
     const notification = await ctx.db.insert("notifications", {
-      organizationId, toUserId, fromUserId,
+      organizationId,
+      toUserId,
+      fromUserId,
       templateId,
       templateData,
       subject,
-      read,
-      templateType,
+      read, templateType,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
 
     const template = await ctx.db.get(templateId)
     if (!template) {
-      throw new Error("Notification template not found")
+      return { success: false, error: "Notification template not found" }
     }
+    try {
+      const notification = await ctx.db.insert("notifications", {
+        organizationId, toUserId, fromUserId,
+        templateId,
+        templateData,
+        subject,
+        read,
+        templateType,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
 
-    const toUser = await ctx.db.get(toUserId)
-    if (!toUser) {
-      throw new Error("User not found")
-    }
+      const template = await ctx.db.get(templateId)
+      if (!template) {
+        throw new Error("Notification template not found")
+      }
 
-    const message = await ctx.http.post("https://messages.google.com/v1/messages:send", {
-      headers: {
-        Authorization: `Bearer ${process.env.GOOGLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: {
-          textBody: template.body,
-          recipient: toUser.phoneNumber,
+      const toUser = await ctx.db.get(toUserId)
+      if (!toUser) {
+        throw new Error("User not found")
+      }
+
+      const message = await ctx.http.post("https://messages.google.com/v1/messages:send", {
+        headers: {
+          Authorization: `Bearer ${process.env.GOOGLE_API_KEY}`,
+          "Content-Type": "application/json",
         },
-      }),
-    })
-    if (!message.ok) {
-      const error = await message.json()
-      throw new Error(`Error sending SMS: ${error.error.message}`)
-    }
+        body: JSON.stringify({
+          message: {
+            textBody: template.body,
+            recipient: toUser.phoneNumber,
+          },
+        }),
+      })
+      if (!message.ok) {
+        const error = await message.json()
+        throw new Error(`Error sending SMS: ${error.error.message}`)
+      }
 
-    return { success: true, notification }
-  } catch (error) {
-    loggingService.error(`Error sending SMS notification: ${error}`, {
-      organizationId, toUserId, fromUserId, read, templateId, templateData, subject, templateType
-    })
-    throw new Error("Failed to send SMS notification")
-  }
-},
-},
+      return { success: true, notification }
+    } catch (error) {
+      loggingService.error(`Error sending SMS notification: ${error}`, {
+        organizationId, toUserId, fromUserId, read, templateId, templateData, subject, templateType
+      })
+      throw new Error("Failed to send SMS notification")
+    };
+  })
 
 // TODO: Implement sendSMS notifications, email notifications, and other types of notifications using Google API's and other services from Google Cloud
 
@@ -226,7 +225,7 @@ async function sendSMSNotification(toPhoneNumber: string, message: string): Prom
   }
 }
 
-async function sendEmailNotification(toEmail: string, subject: string, body: string): Promise<void> {
+async function sendEmailNotification(toEmail: string, subject: string, body: string): Promise<void>) {
   const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
     method: "POST",
     headers: {
@@ -242,7 +241,7 @@ async function sendEmailNotification(toEmail: string, subject: string, body: str
     throw new Error(`Error sending email: ${error.error.message}`);
   }
 }
-async function sendSMSNotificationUsingGoogleChat(toPhoneNumber: string, message: string): Promise<void> {
+async function sendSMSNotificationUsingGoogleChat(toPhoneNumber: string, message: string): Promise<void>) {
   const response = await fetch("https://chat.googleapis.com/v1/spaces/AAAApR7nS0U/messages?key=${process.env.GOOGLE_API_KEY}", {
     method: "POST",
     headers: {
@@ -262,6 +261,3 @@ async function sendSMSNotificationUsingGoogleChat(toPhoneNumber: string, message
     const error = await response.json();
     throw new Error(`Error sending SMS using Google Chat: ${error.error.message}`);
   }
-}
-
-

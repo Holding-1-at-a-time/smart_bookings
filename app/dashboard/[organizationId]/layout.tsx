@@ -10,12 +10,14 @@
     * - Author          : rrome
     * - Modification    : 
 **/
+
+
 import type React from "react"
 import { DashboardNavigation } from "@/components/dashboard-navigation"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { OrganizationSwitcher } from "@/components/organization-switcher"
 import { AccessDenied } from "@/components/access-denied"
-import { auth } from "@clerk/nextjs"
+import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 
 export default function DashboardLayout({

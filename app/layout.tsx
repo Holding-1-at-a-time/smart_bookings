@@ -72,9 +72,6 @@ export default function RootLayout({
             <Navigation />
             <Header /> {/* Header component placed inside the body */}
             <main className="min-h-screen bg-gray-100 pt-16">{children}</main>
-            <RedirectToSignIn
-              signInFallbackRedirectUrl={process.env.NEXT_PUBLIC_SIGN_IN_URL}
-            />
             <Toaster />
             <Analytics />
             <SpeedInsights />

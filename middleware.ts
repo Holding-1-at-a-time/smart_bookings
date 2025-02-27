@@ -11,11 +11,11 @@
     * - Modification    : 
 **/
 import { NextResponse } from "next/server"
-import { authMiddleware, clerkClient } from "@clerk/nextjs/server"
+import { clerkMiddleware, clerkClient } from "@clerk/nextjs/server"
 import { updateUserInfo } from "./convex/auth"
 import { verifyAuth } from "./lib/auth"
 
-export default authMiddleware({
+export default clerkMiddleware({
   async afterAuth(auth, req, evt) {
     const { userId, orgId } = auth
     const { pathname } = req.nextUrl

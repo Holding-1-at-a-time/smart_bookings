@@ -2,7 +2,7 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 26/02/2025 - 09:19:10
+    * @created          : 26/02/2025 - 10:42:40
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
@@ -10,20 +10,22 @@
     * - Author          : rrome
     * - Modification    : 
 **/
-import { jwtVerify, createRemoteJWKSet } from "jose"
-
-const JWKS = createRemoteJWKSet(new URL(process.env.CLERK_JWKS_URL!))
-
-export async function verifyAuth(token: string) {
+/**
+ * Verifies a Clerk authentication token.
+ *
+ * @param {string} token The token to verify.
+ * @returns {Promise<{ isValid: boolean; payload: JWT | null }>}
+ */
+export async function verifyAuth(token: string): Promise<{ isValid: boolean; payload: JWT | null }> {
     try {
-        const verified = await jwtVerify(token, JWKS, {
-            issuer: process.env.CLERK_ISSUER,
+        const verified = await verifyJwt<string>(token, JWKS, {
+            issuer: process.env.CLERK_JWT_ISSUER_DOMAIN!,
             audience: process.env.CLERK_AUDIENCE,
-        })
+        });
 
         return {
             isValid: true,
-            payload: verified.payload,
+            payload: verified,
         }
     } catch (error) {
         return {
@@ -32,4 +34,3 @@ export async function verifyAuth(token: string) {
         }
     }
 }
-

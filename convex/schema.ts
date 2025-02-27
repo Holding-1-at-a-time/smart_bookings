@@ -19,6 +19,7 @@ export default defineSchema({
     name: v.string(),
     organizationMembers: v.array(v.id("organizationMembers")),
     ownerId: v.string(),
+    tokenIdentifier: v.string(),
     settings: v.object({
       timezone: v.string(),
       currency: v.string(),
@@ -38,8 +39,10 @@ export default defineSchema({
     })),
     users: v.array(v.string()),
     roles: v.array(v.string()),
+
     metadata: v.optional(v.any()),
   })
+    .index("by_token", ["tokenIdentifier"])
     .index("by_name", ["name"])
     .index("by_owner", ["ownerId"]),
 
@@ -105,7 +108,8 @@ export default defineSchema({
 
   services: defineTable({
     organizationId: v.id("organizations"),
-    categoryId: v.optional(v.id("serviceCategories")),
+    serviceCategoryId: v.id("serviceCategories"),
+    categoryId: v.id("serviceCategories"),
     name: v.string(),
     description: v.string(),
     duration: v.number(),
@@ -123,7 +127,7 @@ export default defineSchema({
     .index("by_category", ["categoryId"])
     .index("by_name", ["name"])
     .index("by_duration", ["duration"])
-    .index("by_price", ["price"])
+    .index("by_base_price", ["basePrice"])
     .index("by isActive", ["isActive"]),
 
   availability: defineTable({

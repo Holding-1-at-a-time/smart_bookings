@@ -19,6 +19,7 @@ import type * as auth from "../auth.js";
 import type * as bookings from "../bookings.js";
 import type * as businesses from "../businesses.js";
 import type * as customers from "../customers.js";
+import type * as inventory from "../inventory.js";
 import type * as notifications from "../notifications.js";
 import type * as organizations from "../organizations.js";
 import type * as organizationSettings from "../organizationSettings.js";
@@ -31,6 +32,7 @@ import type * as settings from "../settings.js";
 import type * as staff_management from "../staff-management.js";
 import type * as staff from "../staff.js";
 import type * as users from "../users.js";
+import type * as vehicles from "../vehicles.js";
 import type * as weather from "../weather.js";
 
 /**
@@ -48,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   bookings: typeof bookings;
   businesses: typeof businesses;
   customers: typeof customers;
+  inventory: typeof inventory;
   notifications: typeof notifications;
   organizations: typeof organizations;
   organizationSettings: typeof organizationSettings;
@@ -60,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   "staff-management": typeof staff_management;
   staff: typeof staff;
   users: typeof users;
+  vehicles: typeof vehicles;
   weather: typeof weather;
 }>;
 export declare const api: FilterApi<

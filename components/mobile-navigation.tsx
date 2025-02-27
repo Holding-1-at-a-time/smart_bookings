@@ -2,11 +2,11 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 19:38:08
+    * @created          : 26/02/2025 - 21:36:11
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 23/02/2025
+    * - Date            : 26/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
@@ -15,7 +15,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { Menu } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
@@ -34,15 +34,27 @@ export function MobileNavigation() {
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-                <Button variant="ghost" className="md:hidden">
-                    <Menu />
+                <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-6 w-6" />
                     <span className="sr-only">Toggle menu</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left">
-                <div className="flex flex-col space-y-4">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <div className="flex flex-col space-y-4 py-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold">Menu</h2>
+                        <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                            <X className="h-6 w-6" />
+                            <span className="sr-only">Close menu</span>
+                        </Button>
+                    </div>
                     {navItems.map((item) => (
-                        <Link key={item.href} href={item.href} className="text-lg font-medium" onClick={() => setIsOpen(false)}>
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className="text-lg font-medium py-2 px-4 rounded-md hover:bg-accent"
+                            onClick={() => setIsOpen(false)}
+                        >
                             {item.label}
                         </Link>
                     ))}

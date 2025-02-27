@@ -25,6 +25,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { generateText } from "ai"
 import { ollama } from 'ollama-ai-provider';
 import { toast } from "@/hooks/use-toast"
+import { Id } from "@/convex/_generated/dataModel"
 
 interface Service {
     id: string
@@ -44,7 +45,8 @@ export default function BookingWizard() {
     const [customerEmail, setCustomerEmail] = useState("")
     const [availableSlots, setAvailableSlots] = useState<string[]>([])
 
-    const services = useQuery(api.services.getServices, { organizationId: organizationId as string })
+    const id = localStorage.getItem("organizationId");
+    const services = useQuery(api.services.getServices, { organizationId: id as Id<"organizations"> })
     const createBooking = useMutation(api.bookings.createBooking)
 
     useEffect(() => {

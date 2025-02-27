@@ -2,11 +2,11 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 19:38:31
+    * @created          : 26/02/2025 - 21:35:38
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 23/02/2025
+    * - Date            : 26/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
@@ -21,9 +21,9 @@ export default function CustomerLayout({ children }: { children: ReactNode }) {
   const { organizationId } = useParams()
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-primary text-primary-foreground">
-        <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <header className="bg-primary text-primary-foreground sticky top-0 z-10">
+        <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
           <Link href={`/${organizationId}`} className="text-2xl font-bold">
             Auto Detailing AI
           </Link>
@@ -57,9 +57,9 @@ export default function CustomerLayout({ children }: { children: ReactNode }) {
           <MobileNavigation />
         </nav>
       </header>
-      <main className="flex-grow container mx-auto px-6 py-8">{children}</main>
-      <footer className="bg-secondary text-secondary-foreground">
-        <div className="container mx-auto px-6 py-3 text-center">
+      <main className="flex-grow container mx-auto px-4 py-8">{children}</main>
+      <footer className="bg-secondary text-secondary-foreground mt-auto">
+        <div className="container mx-auto px-4 py-3 text-center">
           © {new Date().getFullYear()} Auto Detailing AI. All rights reserved.
         </div>
       </footer>

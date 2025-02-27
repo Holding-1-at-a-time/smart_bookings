@@ -15,7 +15,7 @@
  * https://jestjs.io/docs/configuration
  */
 
-import type {Config} from 'jest';
+import type { Config } from 'jest';
 
 const config: Config = {
   // All imported modules in your tests should be mocked automatically
@@ -40,20 +40,20 @@ const config: Config = {
   coverageDirectory: "coverage",
 
   // An array of regexp pattern strings used to skip coverage collection
-   coveragePathIgnorePatterns: [
-     "\\\\node_modules\\\\"
-   ],
+  coveragePathIgnorePatterns: [
+    "\\\\node_modules\\\\"
+  ],
 
   // Indicates which provider should be used to instrument code for coverage
   coverageProvider: "v8",
 
   // A list of reporter names that Jest uses when writing coverage reports
-   coverageReporters: [
-     "json",
-     "text",
-     "lcov",
-     "clover"
-   ],
+  coverageReporters: [
+    "json",
+    "text",
+    "lcov",
+    "clover"
+  ],
 
   // An object that configures minimum threshold enforcement for coverage results
   // coverageThreshold: undefined,
@@ -65,9 +65,9 @@ const config: Config = {
   // errorOnDeprecated: false,
 
   // The default configuration for fake timers
-  // fakeTimers: {
-  //   "enableGlobally": false
-  // },
+  fakeTimers: {
+    "enableGlobally": true
+  },
 
   // Force coverage collection from ignored files using an array of glob patterns
   // forceCoverageMatch: [],
@@ -81,8 +81,9 @@ const config: Config = {
   // A set of global variables that need to be available in all test environments
   // globals: {},
 
-  // The maximum amount of workers used to run your tests. Can be specified as % or a number. E.g. maxWorkers: 10% will use 10% of your CPU amount + 1 as the maximum worker number. maxWorkers: 2 will use a maximum of 2 workers.
-   maxWorkers: "50%",
+  // The maximum amount of Workers used to run your tests. Can be specified as % or a number. E.g. maxWorkers: 10% will use 10% of your CPU amount + 1 as the maximum worker number. maxWorkers: 2 will use a maximum of 2 workers.
+  maxWorkers: "90%",
+
 
   // An array of directory names to be searched recursively up from the requiring module's location
   // moduleDirectories: [
@@ -90,16 +91,21 @@ const config: Config = {
   // ],
 
   // An array of file extensions your modules use
-   moduleFileExtensions: [
-  //   "js",
-     "mjs",
-  //   "cjs",
-   //  "jsx",
-     "ts",
-     "tsx",
-  //   "json",
-  //   "node"
-   ],
+  moduleFileExtensions: [
+    "js",
+    "mjs",
+    "cjs",
+    "jsx",
+    "ts",
+    "tsx",
+    "json",
+    "node"
+  ],
+
+  roots: ['<rootDir>/app'],
+
+  // The resolver that Jest will use to resolve module imports
+  resolver: null,
 
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
   // moduleNameMapper: {},
@@ -108,14 +114,29 @@ const config: Config = {
   // modulePathIgnorePatterns: [],
 
   // Activates notifications for test results
-   notify: true,
+  notify: true,
 
   // An enum that specifies notification mode. Requires { notify: true }
-  // notifyMode: "failure-change",
+  notifyMode: "failure-change",
 
   // A preset that is used as a base for Jest's configuration
-  // preset: undefined,
+  preset: "ts-jest",
 
+  // The transform that Jest will use to transform TypeScript files
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
+  // The setup files that Jest will run before each test
+  setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
+
+  // The coverage threshold that Jest will use to determine if a test is passing
+  coverageThreshold: {
+    global: {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+    },
+  },
   // Run tests from one or more projects
   // projects: undefined,
 
@@ -138,12 +159,12 @@ const config: Config = {
   // rootDir: undefined,
 
   // A list of paths to directories that Jest should use to search for files in
-  // roots: [
-  //   "<rootDir>"
-  // ],
+  //roots: [
+  //"<rootDir>"
+  //
 
   // Allows you to use a custom runner instead of Jest's default test runner
-   runner: "jest-runner",
+  runner: "jest-runner",
 
   // The paths to modules that run some code to configure or set up the testing environment before each test
   // setupFiles: [],
@@ -158,19 +179,19 @@ const config: Config = {
   // snapshotSerializers: [],
 
   // The test environment that will be used for testing
-    testEnvironment: "jest-environment-node",
+  testEnvironment: "jest-environment-node",
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
 
   // Adds a location field to test results
-  // testLocationInResults: false,
+  testLocationInResults: true,
 
   // The glob patterns Jest uses to detect test files
-  // testMatch: [
-  //   "**/__tests__/**/*.[jt]s?(x)",
-  //   "**/?(*.)+(spec|test).[tj]s?(x)"
-  // ],
+  testMatch: [
+    "**/__tests__/**/*.[jt]s?(x)",
+    "**/?(*.)+(spec|test).[tj]s?(x)"
+  ],
 
   // An array of regexp pattern strings that are matched against all test paths, matched tests are skipped
   // testPathIgnorePatterns: [
@@ -181,10 +202,10 @@ const config: Config = {
   // testRegex: [],
 
   // This option allows the use of a custom results processor
-  // testResultsProcessor: undefined,
+  // tResultsProcessor: ,
 
   // This option allows use of a custom test runner
-   testRunner: "jest-circus/runner",
+  testRunner: "jest-circus/runner",
 
   // A map from regular expressions to paths to transformers
   // transform: undefined,
@@ -199,13 +220,13 @@ const config: Config = {
   // unmockedModulePathPatterns: undefined,
 
   // Indicates whether each individual test should be reported during the run
-  // verbose: undefined,
+  verbose: true,
 
   // An array of regexp patterns that are matched against all source file paths before re-running tests in watch mode
   // watchPathIgnorePatterns: [],
 
   // Whether to use watchman for file crawling
-   watchman: true,
+  watchman: true,
 };
 
 export default config;
