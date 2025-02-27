@@ -21,18 +21,15 @@ export default clerkMiddleware({
     const { pathname } = req.nextUrl
 
     // Handle authentication for protected routes
-    if (
-      pathname.startsWith("/dashboard") ||
-      pathname.startsWith("/admin") ||
-      pathname.startsWith("/api") ||
-      pathname.startsWith("/booking")
-    ) {
-      if (!userId) {
-        const signInUrl = new URL("/sign-in", req.url)
-        signInUrl.searchParams.set("redirect_url", req.url)
-        return NextResponse.redirect(signInUrl)
-      }
+    if ((pathname.startsWith("/dashboard") ||
+          pathname.startsWith("/admin") ||
+          pathname.startsWith("/api") ||
+          pathname.startsWith("/booking")) && !userId) {
+          const signInUrl = new URL("/sign-in", req.url)
+          signInUrl.searchParams.set("redirect_url", req.url)
+          return NextResponse.redirect(signInUrl)
     }
+
 
     // Handle organization selection
     if (userId && !orgId && pathname !== "/org-selection") {
