@@ -241,7 +241,7 @@ async function sendEmailNotification(toEmail: string, subject: string, body: str
     throw new Error(`Error sending email: ${error.error.message}`);
   }
 }
-async function sendSMSNotificationUsingGoogleChat(toPhoneNumber: string, message: string): Promise<void>) {
+async function sendSMSNotificationUsingGoogleChat(toPhoneNumber: string, message: string): Promise<void> {
   const response = await fetch("https://chat.googleapis.com/v1/spaces/AAAApR7nS0U/messages?key=${process.env.GOOGLE_API_KEY}", {
     method: "POST",
     headers: {
