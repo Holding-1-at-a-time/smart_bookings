@@ -36,7 +36,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
-          queries: security-extended, security-and-quality, security-best-practices
+          queries: security-extended, security-and-quality
 
       - if: matrix.build-mode == 'manual'
         shell: bash
