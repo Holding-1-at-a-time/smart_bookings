@@ -45,7 +45,7 @@ export default clerkMiddleware({
       const orgMembership = user.organizationMemberships.find((membership) => membership.organization.id === orgId)
 
       if (orgMembership) {
-        const role = orgMembership.role
+        const {role} = orgMembership
 
         if (pathname.startsWith("/admin") && role !== "admin") {
           return NextResponse.redirect(new URL("/dashboard", req.url))
