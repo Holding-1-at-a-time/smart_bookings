@@ -23,6 +23,7 @@
     "@clerk/shared": "^2.22.0",
     "@clerk/themes": "^2.2.20",
     "@clerk/types": "^4.47.0",
+    "@faker-js/faker": "^9.5.0",
     "@jest/globals": "^29.7.0",
     "@pnpm/exe": "^10.5.2",
     "@radix-ui/react-dialog": "^1.1.6",
@@ -42,7 +43,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "composio-core": "^0.5.18",
-    "convex": "^1.19.2",
+    "convex": "^1.19.3",
     "date-fns": "^4.1.0",
     "esbuild": "0.25.0",
     "framer-motion": "^12.4.7",
@@ -51,7 +52,7 @@
     "next": "15.1.7",
     "npm-run-all": "^4.1.5",
     "ollama-ai-provider": "^1.2.0",
-    "openai": "^4.85.4",
+    "openai": "^4.86.1",
     "path-to-regexp": "8.2.0",
     "prophet": "^0.1.1",
     "react": "^19.0.0",
@@ -63,8 +64,8 @@
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "tar": "7.0.1",
-    "vercel": "^41.2.2",
-    "undici": "7.3.0"
+    "undici": "7.3.0",
+    "vercel": "^41.3.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.0",

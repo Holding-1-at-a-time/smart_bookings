@@ -2,111 +2,73 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 26/02/2025 - 08:59:47
+    * @created          : 27/02/2025 - 23:18:56
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 26/02/2025
+    * - Date            : 27/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-    ; ("use client")
+"use client"
 
-import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
-import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
-interface OverviewData {
-    totalAppointments: number
-    totalRevenue: number
-    topServices: { name: string; count: number }[]
+export default function AdminOverviewPage({
+  params,
+}: {
+  params: { organizationId: string }
+}) {
+  const bookings = useQuery(api.bookings.list, { organizationId: params.organizationId })
+  const revenue = useQuery(api.analytics.getRevenue, { organizationId: params.organizationId })
+  const customers = useQuery(api.customers.list, { organizationId: params.organizationId })
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold">Admin Overview</h1>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {bookings ? (
+              <div className="text-2xl font-bold">{bookings.length}</div>
+            ) : (
+              <Skeleton className="h-8 w-[100px]" />
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {revenue ? (
+              <div className="text-2xl font-bold">${revenue.toFixed(2)}</div>
+            ) : (
+              <Skeleton className="h-8 w-[100px]" />
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {customers ? (
+              <div className="text-2xl font-bold">{customers.length}</div>
+            ) : (
+              <Skeleton className="h-8 w-[100px]" />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
 }
 
-export default function AdminOverview() {
-    const { organizationId } = useParams()
-    const [overviewData, setOverviewData] = useState<OverviewData | null>(null)
-    const [aiInsight, setAiInsight] = useState<string>("")
-
-    const data = useQuery(api.admin.getOverviewData, { organizationId: organizationId as string })
-
-    useEffect(() => {
-        if (data) {
-            setOverviewData(data)
-            generateAIInsight(data)
-        }
-    }, [data])
-
-    const generateAIInsight = async (data: OverviewData) => {
-        try {
-            const { text } = await generateText({
-                model: openai("gpt-4o"),
-                prompt: `Given the following overview data for an auto detailing business:
-                 Total Appointments: ${data.totalAppointments}
-                 Total Revenue: $${data.totalRevenue}
-                 Top Services: ${JSON.stringify(data.topServices)}
-                 
-                 Provide a brief business insight and recommendation based on this data.`,
-            })
-            setAiInsight(text)
-        } catch (error) {
-            console.error("Error generating AI insight:", error)
-            setAiInsight("Unable to generate AI insight at this time.")
-        }
-    }
-
-    if (!overviewData) {
-        return <div>Loading...</div>
-    }
-
-    return (
-        <div className="space-y-6">
-            <h1 className="text-3xl font-bold">Admin Overview</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Total Appointments</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">{overviewData.totalAppointments}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Total Revenue</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">${overviewData.totalRevenue.toFixed(2)}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Top Services</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul>
-                            {overviewData.topServices.map((service, index) => (
-                                <li key={index} className="flex justify-between">
-                                    <span>{service.name}</span>
-                                    <span>{service.count}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </CardContent>
-                </Card>
-            </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>AI Business Insight</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p>{aiInsight}</p>
-                </CardContent>
-            </Card>
-        </div>
-    )
-}
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            

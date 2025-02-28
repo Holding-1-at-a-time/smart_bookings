@@ -2,11 +2,11 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 19:15:20
+    * @created          : 27/02/2025 - 22:05:07
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 23/02/2025
+    * - Date            : 27/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
@@ -14,153 +14,163 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
-interface Service {
-    id: string
-    name: string
-    duration: number
-}
-
-export default function BookingForm() {
-    const { organizationId } = useParams()
+export default function BookingFormPage({
+    params,
+}: {
+    params: { organizationId: string }
+}) {
+    const { toast } = useToast()
     const router = useRouter()
-    const searchParams = useSearchParams()
-    const [services, setServices] = useState<Service[]>([])
-    const [selectedService, setSelectedService] = useState<string>("")
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-    const [selectedTime, setSelectedTime] = useState<string>("")
-    const [customerName, setCustomerName] = useState<string>("")
-    const [customerEmail, setCustomerEmail] = useState<string>("")
-    
-    
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [phone, setPhone] = useState("")
+    const [selectedService, setSelectedService] = useState("")
+    const [selectedDate, setSelectedDate] = useState("")
+    const [selectedTime, setSelectedTime] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
 
-    const servicesData = useQuery(api.services.getServices, { organizationId: organizationId as string })
-    const createBooking = useMutation(api.bookings.createBooking)
-    const sendNotificationEmail = useMutation(api.notifications.sendNotificationEmail)
-
-    useEffect(() => {
-        if (servicesData) {
-            setServices(servicesData)
-        }
-        const serviceId = searchParams.get("serviceId")
-        if (serviceId) {
-            setSelectedService(serviceId)
-        }
-        const date = searchParams.get("date")
-        if (date) {
-            setSelectedDate(new Date(date))
-        }
-    }, [servicesData, searchParams])
-
-
-
-    // Helper functions for input validation
-    const isValidEmail = (email: string) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        return emailRegex.test(email)
-    }
-
-
+    const services = useQuery(api.services.list, { organizationId: params.organizationId })
+    const availableDates = useQuery(api.bookings.getAvailableDates, { organizationId: params.organizationId })
+    const availableTimes = useQuery(api.bookings.getAvailableTimes, {
+        organizationId: params.organizationId,
+        date: selectedDate,
+        serviceId: selectedService,
+    })
+    const createBooking = useMutation(api.bookings.create)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        setIsLoading(true)
         try {
             const booking = await createBooking({
-                organizationId: organizationId as string,
+                organizationId: params.organizationId,
+                name,
+                email,
+                phone,
                 serviceId: selectedService,
-                date: new Date(`${selectedDate}T${selectedTime}`).toISOString(),
-                customerName,
-                customerEmail,
+                date: selectedDate,
+                time: selectedTime,
             })
-
-            // Send confirmation email
-            await sendNotificationEmail({
-                organizationId: organizationId as string,
-                to: customerEmail,
-                subject: "Booking Confirmation",
-                templateType: "confirmation",
-                templateData: {
-                    customerName,
-                    serviceName: services?.find((s) => s.id === selectedService)?.name || "",
-                    date: selectedDate,
-                    time: selectedTime,
-                    businessName: "Auto Detailing AI", // Replace with actual business name
-                    businessAddress: "123 Main St, City, State, ZIP", // Replace with actual address
-                    businessPhone: "(123) 456-7890", // Replace with actual phone number
-                },
-            })
-
             toast({
-                title: "Booking Confirmed",
-                description: "Your appointment has been successfully booked. Check your email for confirmation.",
+                title: "Booking Successful",
+                description: "Your appointment has been booked.",
             })
-            router.push(`/${organizationId}/booking/booking-confirmation/${booking.id}`)
+            router.push(`/${params.organizationId}/booking/booking-confirmation/${booking._id}`)
         } catch (error) {
-            console.error("Error creating booking:", error)
             toast({
-                title: "Error",
-                description: "Failed to create booking. Please try again.",
+                title: "Booking Failed",
+                description: "There was an error booking your appointment.",
                 variant: "destructive",
             })
+        } finally {
+            setIsLoading(false)
         }
     }
 
+    if (!services || !availableDates) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Book an Appointment</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-[100px]" />
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-                <Label htmlFor="service">Service</Label>
-                <Select value={selectedService} onValueChange={setSelectedService}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a service" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {services.map((service) => (
-                            <SelectItem key={service.id} value={service.id}>
-                                {service.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <Label htmlFor="date">Date</Label>
-                <Input
-                    id="date"
-                    type="date"
-                    value={selectedDate ? selectedDate.toISOString().split("T")[0] : ""}
-                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                    required
-                />
-            </div>
-            <div>
-                <Label htmlFor="time">Time</Label>
-                <Input id="time" type="time" value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)} required />
-            </div>
-            <div>
-                <Label htmlFor="customerName">Name</Label>
-                <Input id="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
-            </div>
-            <div>
-                <Label htmlFor="customerEmail">Email</Label>
-                <Input
-                    id="customerEmail"
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    required
-                />
-            </div>
-            <Button type="submit">Book Appointment</Button>
-        </form>
+        <Card>
+            <CardHeader>
+                <CardTitle>Book an Appointment</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Name</Label>
+                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="service">Service</Label>
+                        <Select value={selectedService} onValueChange={setSelectedService}>
+                            <SelectTrigger id="service">
+                                <SelectValue placeholder="Select a service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {services.map((service) => (
+                                    <SelectItem key={service._id} value={service._id}>
+                                        {service.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="date">Date</Label>
+                        <Select value={selectedDate} onValueChange={setSelectedDate}>
+                            <SelectTrigger id="date">
+                                <SelectValue placeholder="Select a date" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableDates.map((date) => (
+                                    <SelectItem key={date} value={date}>
+                                        {new Date(date).toLocaleDateString()}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {selectedDate && selectedService && (
+                        <div className="space-y-2">
+                            <Label htmlFor="time">Time</Label>
+                            <Select value={selectedTime} onValueChange={setSelectedTime}>
+                                <SelectTrigger id="time">
+                                    <SelectValue placeholder="Select a time" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableTimes?.map((time) => (
+                                        <SelectItem key={time} value={time}>
+                                            {time}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading ? "Booking..." : "Book Appointment"}
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
     )
 }
 
