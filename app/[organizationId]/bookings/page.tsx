@@ -45,8 +45,7 @@ export default function BookingWizard() {
     const [customerEmail, setCustomerEmail] = useState("")
     const [availableSlots, setAvailableSlots] = useState<string[]>([])
 
-    const id = localStorage.getItem("organizationId");
-    const services = useQuery(api.services.getServices, { organizationId: id as Id<"organizations"> })
+    const services = useQuery(api.services.getServices, { organizationId: params.organizationId as Id<"organizations"> })
     const createBooking = useMutation(api.bookings.createBooking)
 
     useEffect(() => {
