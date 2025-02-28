@@ -14,10 +14,23 @@
 
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { redirect, useParams } from "next/navigation"
+import { auth, currentUser } from "@clerk/nextjs/server"
+import { useAuth } from "@clerk/nextjs"
+import { AccessDenied } from "@/components/access-denied"
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { organizationId } = useParams()
+  const { userId, orgId, orgRole } = useAuth()
+
+
+  if (!userId || !orgId) {
+    redirect("/sign-in")
+  }
+
+  if (orgRole !== "admin") {
+    return <AccessDenied />
+  }
 
   return (
     <div className="min-h-screen flex">

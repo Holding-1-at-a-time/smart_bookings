@@ -1,0 +1,18 @@
+# .github/workflows/ollama.yml
+name: ollama
+on: push
+jobs:
+  ollama:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run LLM
+        uses: ai-action/ollama-action@v1
+        with:
+          version: 0.5.12
+          model: qwen2.5-coder:14b
+          prompt: 'Code review the diff:'
+
+      - name: Get response
+        env: 
+          response: ${{ steps.llm.outputs.response }}
+        run: echo "$response"

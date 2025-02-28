@@ -1,82 +1,107 @@
 /**
- * @description      : Clerk Next.js middleware with Convex integration
- * @author           : rrome
- * @group            : 
- * @created          : 24/02/2025 - 00:20:16
- * 
- * MODIFICATION LOG
- * - Version         : 1.0.0
- * - Date            : 24/02/2025
- * - Author          : rrome
- * - Modification    : 
- */
-import { ConvexHttpClient } from "convex/browser"
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
-import { toast } from "./hooks/use-toast";
-import { api } from "./convex/_generated/api";
+    * @description      : 
+    * @author           : rrome
+    * @group            : 
+    * @created          : 26/02/2025 - 09:19:24
+    * 
+    * MODIFICATION LOG
+    * - Version         : 1.0.0
+    * - Date            : 26/02/2025
+    * - Author          : rrome
+    * - Modification    : 
+**/
+import { NextResponse } from "next/server"
+import { clerkMiddleware, clerkClient } from "@clerk/nextjs/server"
+import { updateUserInfo } from "./convex/auth"
+import { verifyAuth } from "./lib/auth"
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+export default clerkMiddleware({
+  async afterAuth(auth, req, evt) {
+    const { userId, orgId } = auth
+    const { pathname } = req.nextUrl
 
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)", "/admin(.*)", "/api(.*)", "/booking(.*)"])
-
-
-
-export default clerkMiddleware()
-return async (req, auth) => {
-  // Check if the user is authenticated for protected routes
-  if (isProtectedRoute(req) && !auth.userId) {
-    const signInUrl = new URL(process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL ?? "/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.url);
-    return NextResponse.redirect(signInUrl);
-  }
-  // Fetch user data and permissions if authenticated
-  if (auth.userId) {
-    const user = await auth.users.getUser(auth.userId)
-    const orgPermissions = auth.orgId
-      ? await auth.organizations.getOrganizationMembershipPublicMetadata(auth.orgId, auth.userId)
-      : null
-
-    // Add user data and permissions to the request headers
-    req.headers.set("X-User-Id", auth.userId)
-    req.headers.set("X-User-Email", user.emailAddresses[0].emailAddress)
-    req.headers.set("X-User-Name", `${user.firstName} ${user.lastName}`)
-    if (orgPermissions) {
-      req.headers.set("X-Org-Permissions", JSON.stringify(orgPermissions))
+    // Handle authentication for protected routes
+    if ((pathname.startsWith("/dashboard") ||
+          pathname.startsWith("/admin") ||
+          pathname.startsWith("/api") ||
+          pathname.startsWith("/booking")) && !userId) {
+          const signInUrl = new URL("/sign-in", req.url)
+          signInUrl.searchParams.set("redirect_url", req.url)
+          return NextResponse.redirect(signInUrl)
     }
-    // Update Convex with user information
-    try {
-      await convex.mutation(api.users.updateUserInfo,
-        {
-          userId: auth.userId, // Add userId back to the mutation arguments
-          email: user.emailAddresses[0].emailAddress,
-          name: `${user.firstName} ${user.lastName}`,
-          orgId: auth.orgId,
-          organizationPermissions: orgPermissions,
+
+
+    // Handle organization selection
+    if (userId && !orgId && pathname !== "/org-selection") {
+      return NextResponse.redirect(new URL("/org-selection", req.url))
+    }
+
+    // Role-based access control
+    if (userId && orgId) {
+      const user = await clerkClient.users.getUser(userId)
+      const orgMembership = user.organizationMemberships.find((membership) => membership.organization.id === orgId)
+
+      if (orgMembership) {
+        const {role} = orgMembership
+
+        if (pathname.startsWith("/admin") && role !== "admin") {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
         }
-      )
-    }
-    catch (error) {
-      console.error("Failed to update user info in Convex:", error)
-      toast({
-        title: "Error updating user info",
-        description: "Failed to update user info in Convex",
-        variant: "destructive",
-      })
-    }
-  }
-  // Implement organization-specific data isolation
-  if (auth.orgId) {
-    req.headers.set("X-Organization-Id", auth.orgId)
 
-    // Update Convex queries to include organization ID
-    const originalUrl = new URL(req.url)
-    if (originalUrl.pathname.startsWith("/api/convex")) {
-      const convexUrl = new URL(originalUrl)
-      convexUrl.searchParams.set("organizationId", auth.orgId)
-      req.headers.set("x-convex-url", convexUrl.toString())
+        if (pathname.startsWith("/manager") && !["admin", "manager"].includes(role)) {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
+        }
+
+        if (pathname.startsWith("/detailer") && !["admin", "manager", "detailer"].includes(role)) {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
+        }
+
+        if (pathname.startsWith("/client") && role !== "client") {
+          return NextResponse.redirect(new URL("/dashboard", req.url))
+        }
+      }
     }
 
-    // Continue to the next middleware or to the destination
+    // Manual JWT verification
+    const token = req.headers.get("Authorization")?.split(" ")[1]
+    if (token) {
+      const { isValid, payload } = await verifyAuth(token)
+      if (!isValid) {
+        return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+      }
+      // You can use the payload for additional checks or to set custom headers
+    }
 
+    // Set headers
+    const response = NextResponse.next()
+    response.headers.set("X-User-Id", userId || "")
+    response.headers.set("X-Organization-Id", orgId || "")
+
+    // Update user info in Convex
+    if (userId && orgId) {
+      await updateUserInfoInConvex(userId, orgId)
+    }
+
+    return response
+  },
+})
+
+async function updateUserInfoInConvex(userId: string, orgId: string) {
+  const user = await clerkClient.users.getUser(userId)
+  const orgMembership = user.organizationMemberships.find((membership) => membership.organization.id === orgId)
+
+  if (user && orgMembership) {
+    await updateUserInfo({
+      userId,
+      email: user.emailAddresses[0]?.emailAddress || "",
+      name: `${user.firstName} ${user.lastName}`,
+      orgId,
+      orgPermissions: orgMembership.permissions,
+    })
   }
 }
+
+export const config = {
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+}
+

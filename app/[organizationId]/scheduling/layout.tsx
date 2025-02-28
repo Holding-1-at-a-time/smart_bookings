@@ -2,37 +2,21 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 14:14:19
+    * @created          : 24/02/2025 - 10:17:26
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 23/02/2025
+    * - Date            : 24/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
-"use client"
+import { Loader2 } from "lucide-react"
 
-import type { ReactNode } from "react"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useRouter } from "next/navigation"
-
-export default function SchedulingLayout({ children }: { children: ReactNode }) {
-    const router = useRouter()
-
+export default function ChatLoading() {
     return (
-        <div className="container mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-6">AI-Powered Scheduling</h1>
-            <Tabs defaultValue="ai-suggestion" className="mb-6">
-                <TabsList>
-                    <TabsTrigger value="ai-suggestion" onClick={() => router.push("ai-suggestion")}>
-                        AI Schedule Suggestion
-                    </TabsTrigger>
-                    <TabsTrigger value="availability" onClick={() => router.push("availability")}>
-                        Dynamic Availability
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
-            {children}
+        <div className="flex justify-center items-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading chat...</span>
         </div>
     )
 }

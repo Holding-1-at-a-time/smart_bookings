@@ -2,11 +2,11 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 20:03:12
+    * @created          : 24/02/2025 - 09:13:07
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 23/02/2025
+    * - Date            : 24/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
@@ -14,24 +14,39 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { UserButton, OrganizationSwitcher, SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs"
 import { useOrganization } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
-import React from "react"
 
 export function Navigation() {
     const { organization } = useOrganization()
+    const { organizationId } = useParams()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
     const NavItems = () => (
         <>
             <SignedIn>
                 {organization && (
-                    <Link href={`/dashboard/${organization.id}`} className="text-white hover:underline">
-                        Dashboard
-                    </Link>
+                    <>
+                        <Link href={`/dashboard/${organization.id}`} className="text-white hover:underline">
+                            Dashboard
+                        </Link>
+                        <Link href={`/${organization.id}/booking`} className="text-white hover:underline">
+                            Booking
+                        </Link>
+                        <Link href={`/${organization.id}/services`} className="text-white hover:underline">
+                            Services
+                        </Link>
+                        <Link href={`/${organization.id}/chat`} className="text-white hover:underline">
+                            Chat
+                        </Link>
+                        <Link href={`/${organization.id}/settings`} className="text-white hover:underline">
+                            Settings
+                        </Link>
+                    </>
                 )}
                 <Link href="/user-profile" className="text-white hover:underline">
                     Profile
@@ -110,4 +125,3 @@ export function Navigation() {
         </nav>
     )
 }
-

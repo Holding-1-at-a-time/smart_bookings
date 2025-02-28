@@ -25,7 +25,7 @@ export default function Header() {
                 <nav>
                     <SignedIn>
                         <Link href="/dashboard" className="mr-4">Dashboard</Link>
-                        <UserButton afterSignOutUrl="/" />
+                        <UserButton  />
                     </SignedIn>
                     <SignedOut>
                         <Link href="/auth/sign-in" className="mr-4">Sign In</Link>

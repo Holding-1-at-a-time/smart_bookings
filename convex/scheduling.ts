@@ -13,6 +13,7 @@
 import { v } from "convex/values"
 import { query, mutation } from "./_generated/server"
 import { loggingService } from "../lib/logging-service"
+import { ollama } from "ollama-ai-provider"
 
 export const getAvailableSlots = query({
     args: {
@@ -31,7 +32,7 @@ export const getAvailableSlots = query({
 
             const bookings = await ctx.db
                 .query("bookings")
-                .withIndex("by_organization_and_date", (q) => q.eq("organizationId", organizationId).eq("date", date))
+                .withIndex("by_organization_and_by_date", (q) => q.eq("organizationId", organizationId).eq("date", date))
                 .collect()
 
             // Implement logic to determine available slots based on service duration and existing bookings
@@ -58,7 +59,7 @@ export const optimizeSchedule = mutation({
         try {
             const bookings = await ctx.db
                 .query("bookings")
-                .withIndex("by_organization_and_date", (q) => q.eq("organizationId", organizationId).eq("date", date))
+                .withIndex("by_organization_and_by_date", (q) => q.eq("organizationId", organizationId).eq("date", date))
                 .collect()
 
             // Implement basic AI-driven scheduling logic
@@ -79,19 +80,149 @@ export const optimizeSchedule = mutation({
     },
 })
 
-// Helper functions (implement these based on your specific logic)
-function calculateAvailableSlots(bookings: any[], serviceDuration: number): string[] {
-    // Implement logic to calculate available slots
-    // This is a placeholder and should be replaced with actual logic
-    return ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00"]
-}
+type Booking = {
+    startTime: string;
+    endTime: string;
+};
+function calculateAvailableSlots(bookings: Booking[], serviceDuration: number): string[] {
+    // Implement logic to calculate available slots based on bookings and service duration, and return an array of available time slots a user can book. This should be an efficient algorithm that takes into account the service duration, existing bookings, and business hours.
+    const bookingsStartTimes = bookings.map((booking) => new Date(booking.startTime));
+    const bookingsStartTimesMinutes = bookingsStartTimes.map((time) => time.getHours() * 60 + time.getMinutes());
 
-function basicScheduleOptimization(bookings: any[]): any[] {
-    // Implement basic scheduling optimization logic
-    // This is a placeholder and should be replaced with actual AI-driven logic
-    return bookings.map((booking) => ({
-        ...booking,
-        optimizedTime: booking.time, // For now, just return the original time
-    }))
+    const businessHours = getBusinessHours();
+    const businessHoursMinutes = businessHours.map((time) => time.getHours() * 60 + time.getMinutes());
+
+    const availableSlots: string[] = [];
+    for (let time = businessHoursMinutes[0]; time < businessHoursMinutes[1]; time += 15) {
+        const conflicts = bookingsStartTimesMinutes.some((conflictTime) => {
+            return (
+                conflictTime >= time &&
+                conflictTime < time + serviceDuration
+            );
+        });
+        if (!conflicts) {
+            const timeString = new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+            availableSlots.push(timeString);
+        }
+    }
+    return availableSlots;
+}
+function getBusinessHours(): { hours: number, minutes: number }[] {
+    return [
+        { hours: 9, minutes: 0 },
+        { hours: 17, minutes: 0 },
+    ];
+}
+/**
+ * Updates bookings with an AI agent that will provide optimized scheduling dynamically based on the service duration, typeof service, business hours and existing bookings.
+ *
+ * @param bookings - The bookings to optimize, as an array of `Booking` objects.
+ * @param serviceDuration - The duration of the service, in minutes.
+ * @returns The optimized bookings, as an array of `Booking` objects with the `optimizedTime` property set to the new time.
+ */
+async function optimizeBookingWithAI(bookings: Booking[] | null, serviceDuration: number): Promise<Booking[] | null> {
+    if (!bookings) {
+        throw new Error("Bookings cannot be null or undefined.");
+    }
+
+    const provider = new ollama.Provider()
+    const ai = new ollama.AI(provider)
+
+    const optimizedBookings: Booking[] = []
+
+    for (const booking of bookings) {
+        if (!booking) {
+            throw new Error("Booking cannot be null or undefined.");
+        }
+
+        const prompt = generateText(booking, serviceDuration)
+        const response = await ai.generate(prompt)
+
+        if (!response) {
+            throw new Error("AI response cannot be null or undefined.");
+        }
+
+        const optimizedTime = new Date(response)
+        optimizedTime.setMinutes(optimizedTime.getMinutes() + serviceDuration)
+
+        optimizedBookings.push({
+            ...booking,
+            optimizedTime: optimizedTime.toISOString(),
+        })
+    }
+
+    return optimizedBookings
+}
+async function scheduleBookingWithAI(organizationId: string, booking: Booking | null): Promise<void> {
+    if (!booking) {
+        throw new Error("Booking cannot be null or undefined.");
+    }
+
+    try {
+        // Fetch existing bookings for the organization on the booking date
+        const existingBookings = await fetchBookingsForDate(organizationId, booking.startTime.split("T")[0]);
+
+        // Optimize booking time using AI logic
+        const optimizedBookings = await optimizeBookingWithAI([booking, ...existingBookings], 60);
+
+        if (!optimizedBookings) {
+            throw new Error("Optimized bookings cannot be null or undefined.");
+        }
+
+        // Update the booking with the optimized time
+        booking.startTime = optimizedBookings[0].optimizedTime;
+
+        // Save the booking to the Convex database
+        await saveBookingToDatabase(organizationId, booking);
+    } catch (error) {
+        console.error("Error scheduling booking with AI:", error);
+        throw new Error("Failed to schedule booking with AI.");
+    }
+}
+/**
+ * Fetches bookings for a given organization and date from the Convex database.
+ *
+ * @param organizationId - The ID of the organization to fetch bookings for.
+ * @param date - The date to fetch bookings for, in the format "YYYY-MM-DD".
+ * @returns The bookings for the given organization and date, as an array of `Booking` objects.
+ */
+async function fetchBookingsForDate(
+    organizationId: string,
+    date: string
+): Promise<Booking[]> {
+    const query = api.bookings.listBookings;
+    const args = {
+        organizationId,
+        date,
+    };
+    return await query(args);
+
+}
+/**
+ * Saves a booking to the Convex database.
+ *
+ * @param organizationId - The ID of the organization that the booking belongs to.
+ * @param booking - The booking to be saved, including the service ID, customer ID, date, and time.
+ */
+async function saveBookingToDatabase(
+    organizationId: string,
+    booking: {
+        serviceId: string;
+        customerId: string;
+        startTime: string;
+    },
+): Promise<void> {
+
+    // Save the booking to the Convex database
+    const query = api.bookings.createBooking;
+    const args = {
+        organizationId,
+        serviceId: booking.serviceId,
+        customerId: booking.customerId,
+        date: booking.startTime.split("T")[0],
+        time: booking.startTime.split("T")[1],
+    };
+    await query(args);
+
 }
 

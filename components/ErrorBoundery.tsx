@@ -13,7 +13,7 @@
 "use client";
 import React, { type ErrorInfo, type ReactNode } from "react"
 import { AlertTriangle } from "lucide-react"
-
+import { Button } from "@/components/ui/button"
 /**
  * The props for the ErrorBoundary component.
  */
@@ -50,8 +50,8 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
      */
     constructor(props: ErrorBoundaryProps) {
         super(props)
-        this.state = { hasError: false, error: null }
-    }
+        this.state = { hasError: false, error: undefined }
+
 
     /**
      * Updates the state with the error from the componentDidCatch method.
@@ -78,26 +78,28 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
      * 
      * If an error has occurred, displays a custom error page. Otherwise, renders the children elements.
      */
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-                    <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
-                    <h1 className="text-2xl font-bold mb-2">Oops! Something went wrong.</h1>
-                    <p className="text-gray-400 mb-4">We&apos;re sorry for the inconvenience. Please try again later.</p>
-                    <button
-                        className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded"
-                        onClick={() => this.setState({ hasError: false })}
-                    >
-                        Try again
-                    </button>
-                </div>
-            )
+    render = () => {
+        if (this.state.error) {
+            return <div>Error: {this.state.error.message}</div>;
         }
-
-        return this.props.children
+        if (this.state.hasError) {
+            return <div>Something went wrong.</div>;
+        }
+        return this.props.children;
     }
-}
-
-export default ErrorBoundary
+};
+return (
+    <>
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white" >
+            <><AlertTriangle className="w-16 h-16 text-red-500 mb-4" /><h1 className="text-2xl font-bold mb-2">Oops! Something went wrong.</h1><p className="text-gray-400 mb-4">We&apos;re sorry for the inconvenience. Please try again later.</p><button
+                className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded"
+                onClick={() => this.setState({ hasError: false })}
+            >
+                <Button
+                    className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded"
+                    onClick={event: React.MouseEvent<HTMLButtonElement>) => this.setState({hasError: false })}
+                />
+                </div >
+            </>
+                export default ErrorBoundary
 

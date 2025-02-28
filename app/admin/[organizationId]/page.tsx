@@ -2,23 +2,23 @@
     * @description      : 
     * @author           : rrome
     * @group            : 
-    * @created          : 23/02/2025 - 14:47:12
+    * @created          : 26/02/2025 - 08:59:47
     * 
     * MODIFICATION LOG
     * - Version         : 1.0.0
-    * - Date            : 23/02/2025
+    * - Date            : 26/02/2025
     * - Author          : rrome
     * - Modification    : 
 **/
-"use client"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+    ; ("use client")
 
 import { useState, useEffect } from "react"
 import { useParams } from "next/navigation"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { generateText } from "ai"
-import { ollama } from 'ollama-ai-provider';
+import { openai } from "@ai-sdk/openai"
 
 interface OverviewData {
     totalAppointments: number
@@ -43,7 +43,7 @@ export default function AdminOverview() {
     const generateAIInsight = async (data: OverviewData) => {
         try {
             const { text } = await generateText({
-                model: ollama("llama3.1: 8b"),
+                model: openai("gpt-4o"),
                 prompt: `Given the following overview data for an auto detailing business:
                  Total Appointments: ${data.totalAppointments}
                  Total Revenue: $${data.totalRevenue}
@@ -54,11 +54,6 @@ export default function AdminOverview() {
             setAiInsight(text)
         } catch (error) {
             console.error("Error generating AI insight:", error)
-            toast({
-                title: "Error",
-                description: "Failed to generate AI insight.",
-                variant: "destructive",
-            })
             setAiInsight("Unable to generate AI insight at this time.")
         }
     }
