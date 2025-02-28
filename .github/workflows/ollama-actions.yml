@@ -9,11 +9,10 @@ jobs:
         uses: ai-action/ollama-action@v1
         with:
           version: 0.5.12
-          id: llm
           model: qwen2.5-coder:14b
           prompt: 'Code review the diff:'
 
       - name: Get response
-        env:
+        env: 
           response: ${{ steps.llm.outputs.response }}
         run: echo "$response"
