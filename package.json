@@ -63,8 +63,8 @@
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "tar": "7.0.1",
-    "vercel": "^41.2.2"
-    "undici": "7.3.0",
+    "vercel": "^41.2.2",
+    "undici": "7.3.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.0",
