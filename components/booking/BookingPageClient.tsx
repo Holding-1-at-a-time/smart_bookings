@@ -35,7 +35,7 @@ export default function BookingsPageClient({
     preloadedServices,
 }: BookingsPageClientProps) {
     const { toast } = useToast()
-    const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date())
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
 
     const bookings = usePreloadedQuery(preloadedBookings)
     const services = usePreloadedQuery(preloadedServices)
@@ -108,4 +108,3 @@ export default function BookingsPageClient({
         </ErrorBoundary>
     )
 }
-

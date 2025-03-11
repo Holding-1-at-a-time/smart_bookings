@@ -18,7 +18,6 @@ import { toast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "convex/react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import React from "react";
 
 
 interface CategoryListProps {
@@ -111,4 +110,3 @@ export default function CategoryList({ organizationId, onEdit }: CategoryListPro
     </div>
   );
 }
-

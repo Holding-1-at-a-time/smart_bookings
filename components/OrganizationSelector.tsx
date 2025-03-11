@@ -11,7 +11,6 @@
     * - Modification    : 
 **/
 "use client";
-import React from "react";
 import { OrganizationSwitcher } from "@clerk/nextjs";
 
 export default function OrganizationSelector() {
