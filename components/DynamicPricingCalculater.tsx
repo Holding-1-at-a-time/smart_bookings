@@ -13,7 +13,6 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
 import { useQuery, useMutation } from "convex/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -38,14 +37,13 @@ interface Service {
     features: string[];
 }
 
-export function DynamicPricingCalculator() {
-    const { organizationId } = useParams()
+export function DynamicPricingCalculator({ organizationId }: { organizationId?: string }) {
     const [selectedService, setSelectedService] = useState<string>("")
     const [demandFactor, setDemandFactor] = useState<number>(1)
     const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null)
     const [aiSuggestion, setAiSuggestion] = useState<string>("")
 
-    const services = useQuery(api.services.listServices, { Id: organizationId as string })
+    const services = useQuery(api.services.listServices, { Id: organizationId || "" })
     const analyzeServicePopularity = useMutation(api.analytics.analyzeServicePopularity)
     const forecastDemand = useMutation(api.analytics.forecastDemand)
 
@@ -71,12 +69,12 @@ export function DynamicPricingCalculator() {
             }
 
             const popularity = await analyzeServicePopularity({
-                organizationId: organizationId as string,
+                organizationId: organizationId || "",
                 serviceId: selectedService,
             })
 
             const demand = await forecastDemand({
-                organizationId: organizationId as string,
+                organizationId: organizationId || "",
                 serviceId: selectedService,
             })
 
@@ -150,4 +148,3 @@ export function DynamicPricingCalculator() {
         </Card>
     )
 }
-

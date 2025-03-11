@@ -11,7 +11,7 @@
     * - Modification    : 
 **/
 import { ServiceEditor } from "@/components/service-editor"
-import { DynamicPricingCalculator } from "@/components/dynamic-pricing-calculator"
+import { DynamicPricingCalculator } from "@/components/DynamicPricingCalculater"
 
 export default function ServiceManagementPage({ params }: { params: { organizationId: string } }) {
     return (
@@ -22,4 +22,3 @@ export default function ServiceManagementPage({ params }: { params: { organizati
         </div>
     )
 }
-
